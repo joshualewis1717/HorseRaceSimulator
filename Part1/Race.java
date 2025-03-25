@@ -225,6 +225,15 @@ public class Race
 
         //print the | for the end of the track
         System.out.print('|');
+
+        //print name
+        System.out.print(' ');
+        System.out.print(theHorse.getName());
+
+        //print confidence
+        System.out.print(" (Current confidence ");
+        System.out.print(theHorse.getConfidence());
+        System.out.print(")");
     }
 
 
