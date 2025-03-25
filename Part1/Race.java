@@ -168,9 +168,9 @@ public class Race
      */
     private void printRace()
     {
-        //System.out.print('\u000C');  //clear the terminal window
+        System.out.print('\u000C');  //clear the terminal window
         //try {new ProcessBuilder("cmd", "/c", "cls").inheritIO().start().waitFor();} catch (Exception e) {e.printStackTrace();}
-        System.out.println("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n");
+        //System.out.println("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n");
 
         multiplePrint('=',raceLength+3); //top edge of track
         System.out.println();
