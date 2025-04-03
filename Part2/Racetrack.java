@@ -1,12 +1,13 @@
 import javax.swing.*;
 import java.awt.*;
-import java.awt.geom.GeneralPath;
 import java.awt.geom.Path2D;
-import java.awt.geom.Point2D;
+import java.awt.geom.PathIterator;
 import java.awt.image.BufferedImage;
 
 public class Racetrack extends JPanel {
     public static final int FIG8 = 0, OVAL = 1, CIRCLE = 2;
+
+    private static int trackWidth = 100;
 
     private int trackType;
     private Path2D track;
@@ -36,32 +37,24 @@ public class Racetrack extends JPanel {
         // Cast Graphics to Graphics2D for better control
         Graphics2D g2d = (Graphics2D) g;
         g2d.setFont(GameManager.pixelFont);
-        g2d.setColor(Color.decode(GameManager.ACCENT_COLOR));  // Color of the lemniscate
-
-        // Anti-aliasing for smoother edges
-        //g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-
-        g2d.setStroke(new BasicStroke(100));
-        //g2d.draw(track);
 
 
         // 1. Render the track to an off-screen image
         BufferedImage buffer = new BufferedImage(getWidth(), getHeight(), BufferedImage.TYPE_INT_ARGB);
         Graphics2D bufferG2d = buffer.createGraphics();
-        bufferG2d.setRenderingHint(
-                RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON
-        );
+        bufferG2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         bufferG2d.setColor(Color.decode(GameManager.ACCENT_COLOR));
-        bufferG2d.setStroke(new BasicStroke(100));
+        bufferG2d.setStroke(new BasicStroke(trackWidth));
         bufferG2d.draw(track); // Draw the track to the buffer
+        drawLaneDivisions(bufferG2d, 6);
+        //drawLanes(bufferG2d, 2);
         bufferG2d.dispose();
 
-        // 2. Pixelate the buffer
-        int pixelSize = 8; // Adjust for blockier/smoother effect
-        BufferedImage pixelated = pixelate(buffer, pixelSize);
 
         // 3. Draw the pixelated image to the screen
-        g2d.drawImage(pixelated, 0, 0, null);
+        g2d.drawImage(pixelate(buffer, 5), 0, 0, null);
+
+        drawLanes(g2d, 6);
 
 
         g2d.setColor(Color.decode("#A9731E"));
@@ -69,6 +62,119 @@ public class Racetrack extends JPanel {
         g2d.setColor(Color.decode(GameManager.ACCENT_COLOR));
         g2d.drawString("FIG-8", 10, 70);
     }
+
+    private void drawLanes(Graphics2D g2d, int lanes) {
+        g2d.setStroke(new BasicStroke(1));
+        g2d.setColor(Color.red);
+        for (int i = 0; i < lanes; i++) g2d.draw(generateLane(i,lanes, true));
+    }
+
+    private void drawLaneDivisions(Graphics2D g2d, int lanes) {
+        g2d.setStroke(new BasicStroke(2));
+        g2d.setColor(Color.white);
+        if (lanes > 1) {
+            for (int i = 1; i < lanes; i++) { // Start at 1 to avoid first lane edge
+                double midpointIndex = i - 0.5; // Place divisions between lanes
+                g2d.draw(generateLane(midpointIndex, lanes, true));
+            }
+        }
+    }
+
+
+
+    public Path2D generateLane(double laneIndex, int totalLanes, boolean isCircular) {
+        double laneWidth = trackWidth / (double) totalLanes;
+        double laneOffset = (laneIndex - (totalLanes - 1) / 2.0) * laneWidth; // Center lanes correctly
+
+        Path2D lane = new Path2D.Double();
+        PathIterator it = track.getPathIterator(null, 2.0);
+
+        double[] coords = new double[6];
+        double prevX = 0, prevY = 0;
+        double firstX = 0, firstY = 0; // Store first point
+        double lastOffsetX = 0, lastOffsetY = 0; // Store last calculated offset
+        boolean firstCoord = true, firstDefinition = true;
+
+        while (!it.isDone()) {
+            int type = it.currentSegment(coords);
+            double x = coords[0], y = coords[1];
+
+            if (!firstCoord) {
+                // Compute gradient
+                double dx = x - prevX, dy = y - prevY;
+                double length = Math.sqrt(dx * dx + dy * dy);
+                double normalX = -dy / length, normalY = dx / length;
+
+                // Compute lane offset
+                double laneX = x + normalX * laneOffset;
+                double laneY = y + normalY * laneOffset;
+
+                if (type == PathIterator.SEG_MOVETO) lane.moveTo(laneX, laneY);
+                else if (firstDefinition) {lane.moveTo(laneX, laneY); firstDefinition = false;}
+                else lane.lineTo(laneX, laneY);
+
+                lastOffsetX = normalX * laneOffset; // Store last applied offset
+                lastOffsetY = normalY * laneOffset;
+            } else {
+                firstX = x; // Store the original first point
+                firstY = y;
+                firstCoord = false;
+            }
+
+            prevX = x;
+            prevY = y;
+            it.next();
+        }
+
+        // Apply the last offset to the first point before closing
+        lane.lineTo(firstX + lastOffsetX, firstY + lastOffsetY);
+        if (isCircular) lane.closePath();
+
+        return lane;
+    }
+
+
+    /*public Path2D generateLane(int laneIndex, int totalLanes) {
+        double laneWidth = trackWidth / (double) totalLanes;
+        double laneOffset = (laneIndex - (totalLanes - 1) / 2.0) * laneWidth; // Center lanes correctly
+
+        Path2D lane = new Path2D.Double();
+        PathIterator it = track.getPathIterator(null, 2.0);
+
+        double[] coords = new double[6];
+        double prevX = 0, prevY = 0;
+        boolean first = true;
+
+        while (!it.isDone()) {
+            int type = it.currentSegment(coords);
+            double x = coords[0], y = coords[1];
+
+            if (!first) {
+                // Compute gradient
+                double dx = x - prevX, dy = y - prevY;
+                double length = Math.sqrt(dx * dx + dy * dy);
+                double normalX = -dy / length, normalY = dx / length;
+
+                // Offset for the lane
+                double laneX = x + normalX * laneOffset;
+                double laneY = y + normalY * laneOffset;
+
+                if (type == PathIterator.SEG_MOVETO) lane.moveTo(laneX, laneY);
+                else lane.lineTo(laneX, laneY);
+            } else {
+                lane.moveTo(x, y);
+                first = false;
+            }
+
+            prevX = x;
+            prevY = y;
+            it.next();
+        }
+
+        return lane;
+    }*/
+
+
 
 
     public static Path2D.Double infinityPath(int centerX, int centerY, int width, int height) {

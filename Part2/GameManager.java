@@ -3,7 +3,6 @@ import java.awt.*;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.io.File;
-import java.io.IOException;
 
 public class GameManager {
 
@@ -14,8 +13,9 @@ public class GameManager {
     private static JFrame frame;
     private static JLayeredPane layeredPane;
     private static Racetrack racetrack;
-    private static InfoPanel sidePanel;
+    private static CustomPanel sidePanel;
     public static Font pixelFont;
+    public static CustomButton mainButton1, mainButton2;
 
     public static void main(String[] args) {
         createGUI();
@@ -56,7 +56,7 @@ public class GameManager {
         racetrack.setBounds( 10, 10, 3*layeredPane.getWidth()/4, layeredPane.getHeight() - 20);
 
         //info panel
-        sidePanel = new InfoPanel().setColor(Color.lightGray);
+        sidePanel = new CustomPanel().setColor(Color.decode(ACCENT_COLOR));
         sidePanel.setBehaviour(() -> {
             int width1 = layeredPane.getWidth()/4;
             int height1 = layeredPane.getHeight() - 20;
@@ -64,10 +64,29 @@ public class GameManager {
                     width1, height1);
         });
 
+        //buttons
+        mainButton1 = new CustomButton();
+        mainButton1.setBackground(Color.decode(ACCENT_COLOR));
+        mainButton1.setBehaviour(()->{
+            int w = ( 3*layeredPane.getWidth()/8 ) - 20;
+            int h = 80;
+            mainButton1.setBounds(10, layeredPane.getHeight() - h - 10, w, h);
+        });
+
+        mainButton2 = new CustomButton();
+        mainButton2.setBackground(Color.decode(ACCENT_COLOR));
+        mainButton2.setBehaviour(()->{
+            int w = ( 3*layeredPane.getWidth()/8 ) - 20;
+            int h = 80;
+            mainButton2.setBounds(20 + w, layeredPane.getHeight() - h - 10, w, h);
+        });
+
 
 
         layeredPane.add(racetrack, JLayeredPane.PALETTE_LAYER);
         layeredPane.add(sidePanel.getPanel(), JLayeredPane.PALETTE_LAYER);
+        layeredPane.add(mainButton1, JLayeredPane.PALETTE_LAYER);
+        layeredPane.add(mainButton2, JLayeredPane.PALETTE_LAYER);
         onResized();//build all windows
 
         frame.setContentPane(layeredPane);
@@ -82,7 +101,12 @@ public class GameManager {
 
         racetrack.setBounds( 10, 10, (3*layeredPane.getWidth()/4) - 30, layeredPane.getHeight() - 20);
         racetrack.loadTrack();
+
+        mainButton1.invalidate();
+        mainButton2.invalidate();
         //frame.revalidate(); // Refresh layout after resizing
     }
+
+    //private static void setPage
 
 }
