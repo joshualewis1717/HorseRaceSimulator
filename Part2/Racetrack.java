@@ -3,18 +3,21 @@ import java.awt.*;
 import java.awt.geom.Path2D;
 import java.awt.geom.PathIterator;
 import java.awt.image.BufferedImage;
+import java.util.ArrayList;
+import java.util.Random;
 
 public class Racetrack extends JPanel {
     public static final int FIG8 = 0, OVAL = 1, CIRCLE = 2;
-
     private static int trackWidth = 100;
 
     private int trackType;
     private Path2D track;
+    private ArrayList<Horse> horses;
 
-    public Racetrack() {
+    public Racetrack(int track) {
         this.setOpaque(false);
-        setTrack(FIG8);
+        horses = new ArrayList<>();
+        setTrack(track);
     }
 
     public void setTrack(int trackType) {
@@ -28,6 +31,20 @@ public class Racetrack extends JPanel {
         else if (trackType == CIRCLE) track = circlePath(getWidth() / 2, getHeight() / 2, getWidth(), getHeight());
     }
 
+    public void addHorse(String name, double confidence){
+        Random r = new Random();
+        SwingUtilities.invokeLater(() ->
+                horses.add(new Horse(
+                        name,
+                        confidence,
+                        horses.size(),
+                        (int) (this.getWidth() * r.nextFloat()),
+                        (int) (this.getHeight() * r.nextFloat()))
+                )
+
+        );
+    }
+
 
 
 
@@ -36,7 +53,7 @@ public class Racetrack extends JPanel {
         super.paintComponent(g);
         // Cast Graphics to Graphics2D for better control
         Graphics2D g2d = (Graphics2D) g;
-        g2d.setFont(GameManager.pixelFont);
+        g2d.setFont(GameManager.bigPixelFont);
 
 
         // 1. Render the track to an off-screen image
@@ -46,45 +63,45 @@ public class Racetrack extends JPanel {
         bufferG2d.setColor(Color.decode(GameManager.ACCENT_COLOR));
         bufferG2d.setStroke(new BasicStroke(trackWidth));
         bufferG2d.draw(track); // Draw the track to the buffer
-        drawLaneDivisions(bufferG2d, 6);
-        //drawLanes(bufferG2d, 2);
+        drawLaneDivisions(bufferG2d);
         bufferG2d.dispose();
 
 
-        // 3. Draw the pixelated image to the screen
-        g2d.drawImage(pixelate(buffer, 5), 0, 0, null);
 
-        drawLanes(g2d, 6);
+        g2d.drawImage(pixelate(buffer, 5), 0, 0, null);
+        //drawLanes(g2d);
+        //draw horses
+        for (Horse horse: horses) horse.draw(g2d);
 
 
         g2d.setColor(Color.decode("#A9731E"));
-        g2d.drawString("FIG-8", 12, 72);
+        g2d.drawString("FIG- 8", 12, 72);
         g2d.setColor(Color.decode(GameManager.ACCENT_COLOR));
         g2d.drawString("FIG-8", 10, 70);
     }
 
-    private void drawLanes(Graphics2D g2d, int lanes) {
+    private void drawLanes(Graphics2D g2d) {
         g2d.setStroke(new BasicStroke(1));
         g2d.setColor(Color.red);
-        for (int i = 0; i < lanes; i++) g2d.draw(generateLane(i,lanes, true));
+        for (int i = 0; i < horses.size(); i++) g2d.draw(generateLane(i, true));
     }
 
-    private void drawLaneDivisions(Graphics2D g2d, int lanes) {
+    private void drawLaneDivisions(Graphics2D g2d) {
         g2d.setStroke(new BasicStroke(2));
         g2d.setColor(Color.white);
-        if (lanes > 1) {
-            for (int i = 1; i < lanes; i++) { // Start at 1 to avoid first lane edge
+        if (horses.size() > 1) {
+            for (int i = 1; i < horses.size(); i++) { // Start at 1 to avoid first lane edge
                 double midpointIndex = i - 0.5; // Place divisions between lanes
-                g2d.draw(generateLane(midpointIndex, lanes, true));
+                g2d.draw(generateLane(midpointIndex, true));
             }
         }
     }
 
 
 
-    public Path2D generateLane(double laneIndex, int totalLanes, boolean isCircular) {
-        double laneWidth = trackWidth / (double) totalLanes;
-        double laneOffset = (laneIndex - (totalLanes - 1) / 2.0) * laneWidth; // Center lanes correctly
+    public Path2D generateLane(double laneIndex, boolean isCircular) {
+        double laneWidth = trackWidth / (double) horses.size();
+        double laneOffset = (laneIndex - (horses.size() - 1) / 2.0) * laneWidth; // Center lanes correctly
 
         Path2D lane = new Path2D.Double();
         PathIterator it = track.getPathIterator(null, 2.0);
@@ -132,47 +149,6 @@ public class Racetrack extends JPanel {
 
         return lane;
     }
-
-
-    /*public Path2D generateLane(int laneIndex, int totalLanes) {
-        double laneWidth = trackWidth / (double) totalLanes;
-        double laneOffset = (laneIndex - (totalLanes - 1) / 2.0) * laneWidth; // Center lanes correctly
-
-        Path2D lane = new Path2D.Double();
-        PathIterator it = track.getPathIterator(null, 2.0);
-
-        double[] coords = new double[6];
-        double prevX = 0, prevY = 0;
-        boolean first = true;
-
-        while (!it.isDone()) {
-            int type = it.currentSegment(coords);
-            double x = coords[0], y = coords[1];
-
-            if (!first) {
-                // Compute gradient
-                double dx = x - prevX, dy = y - prevY;
-                double length = Math.sqrt(dx * dx + dy * dy);
-                double normalX = -dy / length, normalY = dx / length;
-
-                // Offset for the lane
-                double laneX = x + normalX * laneOffset;
-                double laneY = y + normalY * laneOffset;
-
-                if (type == PathIterator.SEG_MOVETO) lane.moveTo(laneX, laneY);
-                else lane.lineTo(laneX, laneY);
-            } else {
-                lane.moveTo(x, y);
-                first = false;
-            }
-
-            prevX = x;
-            prevY = y;
-            it.next();
-        }
-
-        return lane;
-    }*/
 
 
 
@@ -308,4 +284,12 @@ public class Racetrack extends JPanel {
     }
 
 
+    public void resetTrack(int minDuration) {
+        for (Horse horse : horses) horse.goBackToStart(this, minDuration);
+
+    }
+
+    public void advanceEvent() {
+        for (Horse horse : horses) horse.advanceEvent();
+    }
 }

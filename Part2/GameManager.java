@@ -1,8 +1,10 @@
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionListener;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.io.File;
+import java.util.concurrent.TimeUnit;
 
 public class GameManager {
 
@@ -14,11 +16,18 @@ public class GameManager {
     private static JLayeredPane layeredPane;
     private static Racetrack racetrack;
     private static CustomPanel sidePanel;
-    public static Font pixelFont;
+    public static Font bigPixelFont, mediumPixelFont, smallPixelFont;
     public static CustomButton mainButton1, mainButton2;
+
+    public static boolean racing = false;
+    public static String lastWinner = "none";
 
     public static void main(String[] args) {
         createGUI();
+
+        racetrack.addHorse("stfu", 0.5);
+        racetrack.addHorse("idiot", 0.5);
+        racetrack.addHorse("dumbass", 0.5);
     }
 
     public static void createGUI(){
@@ -28,9 +37,15 @@ public class GameManager {
 
         //create font
         try {
-            pixelFont = Font.createFont(Font.TRUETYPE_FONT,new File("pixelSans.ttf")).deriveFont(70f);
+            Font pixelFont = Font.createFont(Font.TRUETYPE_FONT,new File("pixelSans.ttf"));
+            bigPixelFont = pixelFont.deriveFont(70f);
+            mediumPixelFont = pixelFont.deriveFont(50f);
+            smallPixelFont = pixelFont.deriveFont(30f);
         } catch (Exception e) {
-            pixelFont = new Font("Arial", Font.PLAIN, 30);
+            Font pixelFont = new Font("Arial", Font.PLAIN, 30);
+            bigPixelFont = pixelFont.deriveFont(70f);
+            mediumPixelFont = pixelFont.deriveFont(50f);
+            smallPixelFont = pixelFont.deriveFont(30f);
         }
 
         //set window size to 80% the monitor size
@@ -52,7 +67,7 @@ public class GameManager {
         layeredPane.setOpaque(true);
 
         // main racetrack
-        racetrack = new Racetrack();
+        racetrack = new Racetrack(Racetrack.FIG8);
         racetrack.setBounds( 10, 10, 3*layeredPane.getWidth()/4, layeredPane.getHeight() - 20);
 
         //info panel
@@ -80,6 +95,11 @@ public class GameManager {
             int h = 80;
             mainButton2.setBounds(20 + w, layeredPane.getHeight() - h - 10, w, h);
         });
+        mainButton2.setText("reset track");
+        mainButton2.setFont(mediumPixelFont);
+        mainButton2.setAction(e -> resetTrack());
+
+
 
 
 
@@ -104,9 +124,43 @@ public class GameManager {
 
         mainButton1.invalidate();
         mainButton2.invalidate();
-        //frame.revalidate(); // Refresh layout after resizing
+        frame.revalidate(); // Refresh layout after resizing
     }
 
-    //private static void setPage
+    public static void invalidate() {
+        racetrack.repaint();
+    }
+
+    private static void resetTrack() {
+        racetrack.resetTrack(1000);
+        mainButton2.setText("start race");
+
+        for (ActionListener al : mainButton2.getActionListeners()) {mainButton2.removeActionListener(al);}
+        mainButton2.setAction(e -> startRaceGUI());
+    }
+
+    public static void setWinner(Horse horse){
+        lastWinner = horse.getName();
+        racing = false;
+    }
+
+    private static Timer raceTimer;
+
+    private static void startRaceGUI() {
+        racing = true;
+
+        raceTimer = new Timer(100, e -> {
+            if (!racing) {
+                ((Timer) e.getSource()).stop(); // stop when race ends
+                System.out.println(lastWinner);
+            } else {
+                racetrack.advanceEvent();
+                invalidate(); // triggers repaint
+            }
+        });
+
+        raceTimer.start();
+    }
+
 
 }
