@@ -1,16 +1,14 @@
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionListener;
-import java.awt.event.ComponentAdapter;
-import java.awt.event.ComponentEvent;
+import java.awt.event.*;
 import java.io.File;
-import java.util.concurrent.TimeUnit;
 
 public class GameManager {
 
     //constants
-    public static final String BACKGROUND_COLOR = "#F0AE24";
-    public static final String ACCENT_COLOR = "#B5702A";
+    public static final Color BACKGROUND_COLOR = Color.decode("#F0AE24");
+    public static final Color ACCENT_COLOR = Color.decode("#B5702A");
+    public static final Color ACCENT_BTN_COLOR = Color.decode("#6E4F2A");
 
     private static JFrame frame;
     private static JLayeredPane layeredPane;
@@ -61,31 +59,32 @@ public class GameManager {
         // Create layered pane
         layeredPane = new JLayeredPane();
         layeredPane.setPreferredSize(new Dimension(width, height));
-        layeredPane.setBackground(Color.decode(BACKGROUND_COLOR));
+        layeredPane.setBackground(BACKGROUND_COLOR);
         layeredPane.setOpaque(true);
 
         // main racetrack
-        racetrack = new Racetrack(Racetrack.FIG8);
+        racetrack = new Racetrack(0,0);//just always start with default weather and track type (0)
         racetrack.setBounds( 10, 10, 3*layeredPane.getWidth()/4, layeredPane.getHeight() - 20);
 
         //info panel
         sidePanel = new CustomPanel();
-        sidePanel.setBackground(Color.decode(ACCENT_COLOR));
+        sidePanel.setBackground(ACCENT_COLOR);
         sidePanel.setBehaviour(() -> {
             int width1 = layeredPane.getWidth()/4;
             int height1 = layeredPane.getHeight() - 20;
             sidePanel.setBounds(layeredPane.getWidth() - width1 - 10, 10,
                     width1, height1);
         });
-        setRaceConfigureScreen(sidePanel);
+
+
+        setRaceConfigureScreen();
 
         //buttons
         mainButton1 = new CustomButton("Menu"); //create buttons
-        mainButton2 = new CustomButton("reset race");
+        mainButton2 = new CustomButton("Prepare Race");
 
         for (CustomButton button : new CustomButton[] {mainButton1, mainButton2}) { //apply duplicate instructions
-            button.setForeground(Color.WHITE);
-            button.setBackground(Color.decode(ACCENT_COLOR));
+            button.setBackground(ACCENT_COLOR);
             button.setFont(mediumPixelFont);
         }
 
@@ -100,6 +99,7 @@ public class GameManager {
             int h = 80;
             mainButton2.setBounds(20 + w, layeredPane.getHeight() - h - 10, w, h);
         });
+
         mainButton2.setAction(e -> resetTrack());
 
 
@@ -140,6 +140,7 @@ public class GameManager {
 
     private static void resetTrack() {
         racetrack.resetTrack(1000);
+        setHorseConfigureScreen();
         repurposeButton(mainButton2,"start race", _ -> startRaceGUI());
     }
 
@@ -158,6 +159,7 @@ public class GameManager {
                 ((Timer) e.getSource()).stop(); // stop when race ends
                 System.out.println(lastWinner);
                 repurposeButton(mainButton2,"reset race", _ -> resetTrack());
+                setRaceConfigureScreen();
             } else {
                 racetrack.advanceEvent();
                 invalidate(); // triggers repaint
@@ -173,50 +175,124 @@ public class GameManager {
     }
 
 
+    private static void setHorseConfigureScreen() {
+        sidePanel.removeAll();
+
+        addNewLabel(sidePanel, smallPixelFont, "Customize");
 
 
 
-    private static void setRaceConfigureScreen(CustomPanel sidePanel) {
+        sidePanel.repaint();
+    }
+
+
+    private static void setRaceConfigureScreen() {
+        sidePanel.removeAll();
         sidePanel.setLayout(new BoxLayout(sidePanel, BoxLayout.Y_AXIS));
         sidePanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
-        JLabel title = new JLabel("Configure Race");
-        title.setFont(smallPixelFont);
-        title.setForeground(Color.WHITE);
-        sidePanel.add(title);
+        addNewLabel(sidePanel, smallPixelFont, "Configure Race");
 
-        // Create the inline panel that will hold the JLabel and buttons
+
+        //Lanes
+        addPlusMinusControl(sidePanel,"Lanes",
+                e -> { if (racetrack.getLanes() < 6) racetrack.addNewRandomHorse();  invalidate();},  //plus function
+                e -> { if (racetrack.getLanes() > 2) racetrack.killLastHorse();      invalidate();}); //minus function
+        sidePanel.add(Box.createVerticalGlue());
+
+        //Length
+        addPlusMinusControl(sidePanel,"Length", e -> {
+            racetrack.increaseLength();
+            invalidate();//plus function
+            }, e -> {
+            racetrack.decreaseLength();
+            invalidate();//minus function
+        });
+        sidePanel.add(Box.createVerticalGlue());
+
+        //track selection
+        addNewLabel(sidePanel, verySmallPixelFont, "Select Track");
+
+        ActionListener[] trackSets = new ActionListener[Racetrack.trackNames.length];
+        for (int i = 0; i < trackSets.length; i++) {
+            int finalI = i;
+            trackSets[i] = e -> {racetrack.setTrack(finalI); invalidate();};
+        }
+        addButtonList(sidePanel, Racetrack.trackNames, trackSets);
+        sidePanel.add(Box.createVerticalGlue());
+
+        //weather selection
+        addNewLabel(sidePanel, verySmallPixelFont, "Select Weather");
+
+        ActionListener[] weatherSets = new ActionListener[Racetrack.weatherNames.length];
+        for (int i = 0; i < weatherSets.length; i++) {
+            int finalI = i;
+            weatherSets[i] = e -> {racetrack.setWeather(finalI); invalidate();};
+        }
+        addButtonList(sidePanel, Racetrack.weatherNames, weatherSets);
+
+
+        sidePanel.repaint();
+    }
+
+    //add premade custom components
+    private static void addNewLabel(JPanel parent, Font font, String label) {
+        JLabel jLabel = new JLabel(label);
+        jLabel.setFont(font);
+        jLabel.setForeground(Color.WHITE);
+        parent.add(jLabel);
+    }
+    private static void addPlusMinusControl(JPanel parent, String label, ActionListener plusFunction, ActionListener minusFunction){
         JPanel inlinePanel = new JPanel();
         inlinePanel.setLayout(new BoxLayout(inlinePanel, BoxLayout.X_AXIS)); // Horizontally align elements
-
-        // Create the JLabel and buttons
-        JLabel lanesLabel = new JLabel("Lanes");
-        lanesLabel.setFont(verySmallPixelFont); // Optional: use your font
-        inlinePanel.add(lanesLabel); // Add label to the inline panel
-
-        // Create the plus and minus buttons
-        CustomButton minusButton = new CustomButton("-");
+        inlinePanel.setBackground(ACCENT_COLOR);
+        JLabel jLabel = new JLabel(label);
+        jLabel.setFont(verySmallPixelFont);
+        jLabel.setForeground(Color.WHITE);
         CustomButton plusButton = new CustomButton("+");
+        CustomButton minusButton = new CustomButton("-");
 
-        // Optional: Add event listeners for buttons
-        plusButton.addActionListener(e -> {
-            racetrack.addNewRandomHorse();
-            invalidate();
-        });
-        minusButton.addActionListener(e -> {
-            racetrack.killLastHorse();
-            invalidate();
-        });
+        for (CustomButton btn : new CustomButton[] {plusButton, minusButton}) {
+            btn.setBackground(ACCENT_BTN_COLOR);
+            btn.setFont(smallPixelFont);
+        }
 
-        inlinePanel.add(minusButton);
+        plusButton.addActionListener(plusFunction);
+        minusButton.addActionListener(minusFunction);
+
+        inlinePanel.add(jLabel);
+        inlinePanel.add(Box.createHorizontalGlue()); //just pushes elements apart
         inlinePanel.add(plusButton);
-
-        // Ensure the inlinePanel does not stretch and takes up only necessary space
-        inlinePanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 50)); // Set a max height if needed
-        inlinePanel.setAlignmentX(Component.LEFT_ALIGNMENT); // Align the panel to the left
-
-        // Add the inline panel to the main sidePanel
-        sidePanel.add(inlinePanel);
+        inlinePanel.add(Box.createRigidArea(new Dimension(30, 0)));
+        inlinePanel.add(minusButton);
+        inlinePanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 50));
+        inlinePanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        parent.add(inlinePanel);
     }
+    private static void addButtonList(JPanel parent, String[] labels, ActionListener[] functions) {
+        JPanel inlinePanel = new JPanel();
+        inlinePanel.setLayout(new BoxLayout(inlinePanel, BoxLayout.Y_AXIS)); // Horizontally align elements
+        inlinePanel.setBackground(ACCENT_COLOR);
+
+        for (int i = 0; i < labels.length && i < functions.length; i++) { //ensure this cannot crash due to two diff array lengths
+            CustomButton btn = new CustomButton(labels[i]);
+            btn.setBackground(ACCENT_BTN_COLOR);
+            btn.setFont(verySmallPixelFont);
+            btn.addActionListener(functions[i]);
+            btn.setBehaviour(() -> {
+                int width = parent.getWidth()-20; // full width
+                int height = btn.getPreferredSize().height; // keep height from font or layout
+                btn.setBounds(0, btn.getY(), width, height); // apply
+            });
+
+            inlinePanel.add(btn);
+            inlinePanel.add(Box.createRigidArea(new Dimension(0, 5)));
+        }
+
+        inlinePanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 50*labels.length));
+        inlinePanel.setAlignmentY(Component.TOP_ALIGNMENT);
+        parent.add(inlinePanel);
+    }
+    private static void addHorseCustomizePanel(JPanel parent, Horse horse)
 
 }

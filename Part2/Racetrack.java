@@ -7,23 +7,47 @@ import java.util.ArrayList;
 import java.util.Random;
 
 public class Racetrack extends JPanel {
-    public static final int FIG8 = 0, OVAL = 1, CIRCLE = 2;
-    public static final String[] trackNames = {"FIG-8", "OVAL", "CIRCLE"};
+
     private static int trackWidth = 100;
-
-    private int trackType;
+    private static int length = 1500;
     private Path2D track;
-    private ArrayList<Horse> horses;
+    private ArrayList<Horse> horses; //lanes is the same as horses.size()
 
-    public Racetrack(int track) {
+    //weather and track type
+    public static final int FIG8 = 0, OVAL = 1, CIRCLE = 2;
+    public static final int SUNNY = 0, CLOUDY = 1, RAINY = 2, MUDDY = 3, ICY = 4;
+    public static final String[] trackNames = {"FIG-8", "OVAL", "CIRCLE"};
+    public static final String[] weatherNames = {"SUNNY", "CLOUDY", "RAINY", "MUDDY", "ICY"};
+    private int weatherType;
+    private int trackType;
+
+
+    public Racetrack(int track, int weather) {
         this.setOpaque(false);
         horses = new ArrayList<>();
         setTrack(track);
+        setWeather(weather);
+    }
+
+    public int getLanes() {
+        return horses.size();
+    }
+
+    public void increaseLength() {
+        length+=100;
+    }
+    public void decreaseLength() {
+        length-=100;
     }
 
     public void setTrack(int trackType) {
         this.trackType = trackType;
         loadTrack();
+    }
+
+    public void setWeather(int weather) {
+        this.weatherType = weather;
+        invalidate();
     }
 
     public void loadTrack() {
@@ -63,14 +87,14 @@ public class Racetrack extends JPanel {
         super.paintComponent(g);
         // Cast Graphics to Graphics2D for better control
         Graphics2D g2d = (Graphics2D) g;
-        g2d.setFont(GameManager.bigPixelFont);
+
 
 
         // 1. Render the track to an off-screen image
         BufferedImage buffer = new BufferedImage(getWidth(), getHeight(), BufferedImage.TYPE_INT_ARGB);
         Graphics2D bufferG2d = buffer.createGraphics();
         bufferG2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-        bufferG2d.setColor(Color.decode(GameManager.ACCENT_COLOR));
+        bufferG2d.setColor(GameManager.ACCENT_COLOR);
         bufferG2d.setStroke(new BasicStroke(trackWidth));
         bufferG2d.draw(track); // Draw the track to the buffer
         drawLaneDivisions(bufferG2d);
@@ -78,17 +102,29 @@ public class Racetrack extends JPanel {
 
 
 
-        //g2d.drawImage(pixelate(buffer, 5), 0, 0, null);
-        g2d.drawImage(buffer, 0, 0, null);
+        g2d.drawImage(pixelate(buffer, 5), 0, 0, null);
+        //g2d.drawImage(buffer, 0, 0, null);
         //drawLanes(g2d);
         //draw horses
         for (Horse horse: horses) horse.draw(g2d);
 
-
+        g2d.setFont(GameManager.bigPixelFont);
         g2d.setColor(Color.decode("#A9731E"));
         g2d.drawString(trackNames[trackType], 12, 72);
-        g2d.setColor(Color.decode(GameManager.ACCENT_COLOR));
+        g2d.setColor(GameManager.ACCENT_COLOR);
         g2d.drawString(trackNames[trackType], 10, 70);
+
+        g2d.setFont(GameManager.smallPixelFont);
+        g2d.setColor(Color.decode("#A9731E"));
+        g2d.drawString(length + "m", 11, 101);
+        g2d.setColor(GameManager.ACCENT_COLOR);
+        g2d.drawString(length + "m", 10, 100);
+
+        g2d.setFont(GameManager.verySmallPixelFont);
+        g2d.setColor(Color.decode("#A9731E"));
+        g2d.drawString(weatherNames[weatherType], 11, 121);
+        g2d.setColor(GameManager.ACCENT_COLOR);
+        g2d.drawString(weatherNames[weatherType], 10, 120);
     }
 
     private void drawLanes(Graphics2D g2d) {

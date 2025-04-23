@@ -14,7 +14,6 @@ public class Horse {
     public static final String srcImgPath = "assets/horse.png";
     private BufferedImage imgAtlas; // Horse image
     private PathIterator trackIterator;
-    private int horseImageIndex = 0;
 
     private String name;
     private double confidence;
@@ -109,7 +108,7 @@ public class Horse {
     public void advanceEvent() {
         if (trackIterator.isDone()) {
             GameManager.setWinner(this);
-            System.out.println("CALLED");
+            System.out.println("CALLED" + name);
             return;
         }
 

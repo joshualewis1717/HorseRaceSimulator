@@ -7,7 +7,10 @@ public class CustomButton extends JButton { // Extend JButton instead of JPanel
     private Runnable boundSetRunnable;
 
     public CustomButton(String text) {
-        super(text); // Call JButton constructor
+        super(text);
+        setForeground(Color.WHITE);
+        setFocusPainted(false);
+        setBorderPainted(false);
     }
 
     public CustomButton setBehaviour(Runnable boundSetRunnable) {
