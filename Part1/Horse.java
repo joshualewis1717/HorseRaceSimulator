@@ -36,6 +36,7 @@ public class Horse
     public void fall()
     {
         hasFallen = true;
+        confidence -= 0.1;
     }
 
     public double getConfidence()
@@ -72,6 +73,7 @@ public class Horse
 
     public boolean hasWon()
     {
+        confidence += 0.1;
         return hasWon;
     }
 

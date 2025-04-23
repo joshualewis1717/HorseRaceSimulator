@@ -58,11 +58,13 @@ public class Race
     }
 
     public static void main(String[] args){
-        Race race = new Race(20);
-        race.addHorse(new Horse('@',"ur mum", 0.4), 1);
-        race.addHorse(new Horse('#',"joe", 0.6), 2);
-        race.addHorse(new Horse('~',"shush", 0.5), 3);
-        race.startRace();
+        for (int i = 0; i < 10; i++) {
+            Race race = new Race(20);
+            race.addHorse(new Horse('@', "ur mum", 0.4), 1);
+            race.addHorse(new Horse('#', "joe", 0.6), 2);
+            race.addHorse(new Horse('~', "shush", 0.5), 3);
+            race.startRace();
+        }
     }
 
     /**
@@ -168,8 +170,8 @@ public class Race
      */
     private void printRace()
     {
-        //System.out.print('\u000C');  //clear the terminal window
-        try {new ProcessBuilder("cmd", "/c", "cls").inheritIO().start().waitFor();} catch (Exception e) {e.printStackTrace();}
+        System.out.print('\u000C');  //clear the terminal window
+        //try {new ProcessBuilder("cmd", "/c", "cls").inheritIO().start().waitFor();} catch (Exception e) {e.printStackTrace();}
         //System.out.println("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n");
 
         multiplePrint('=',raceLength+3); //top edge of track
