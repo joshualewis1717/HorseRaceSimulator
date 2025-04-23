@@ -6,8 +6,8 @@ public class CustomButton extends JButton { // Extend JButton instead of JPanel
 
     private Runnable boundSetRunnable;
 
-    public CustomButton() {
-        super(); // Call JButton constructor
+    public CustomButton(String text) {
+        super(text); // Call JButton constructor
     }
 
     public CustomButton setBehaviour(Runnable boundSetRunnable) {

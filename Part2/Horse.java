@@ -97,9 +97,6 @@ public class Horse {
     }
 
 
-    public void setPosition(int x, int y) { this.x = x; this.y = y; } // Update position
-
-
     public void goBackToStart(Racetrack racetrack, int minDuration) {
         track = racetrack.generateLane(lane,true);
 

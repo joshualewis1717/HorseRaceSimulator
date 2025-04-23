@@ -8,6 +8,7 @@ import java.util.Random;
 
 public class Racetrack extends JPanel {
     public static final int FIG8 = 0, OVAL = 1, CIRCLE = 2;
+    public static final String[] trackNames = {"FIG-8", "OVAL", "CIRCLE"};
     private static int trackWidth = 100;
 
     private int trackType;
@@ -29,6 +30,15 @@ public class Racetrack extends JPanel {
         if (trackType == FIG8) track = infinityPath(getWidth() / 2, getHeight() / 2, getWidth(), getHeight());
         else if (trackType == OVAL) track = ovalPath(getWidth() / 2, getHeight() / 2, getWidth(), getHeight());
         else if (trackType == CIRCLE) track = circlePath(getWidth() / 2, getHeight() / 2, getWidth(), getHeight());
+    }
+
+
+    public void addNewRandomHorse() {
+        addHorse("placeHolder " + horses.size(), 0.5);
+    }
+
+    public void killLastHorse() {
+        if (horses.size() > 1) horses.removeLast();
     }
 
     public void addHorse(String name, double confidence){
@@ -68,16 +78,17 @@ public class Racetrack extends JPanel {
 
 
 
-        g2d.drawImage(pixelate(buffer, 5), 0, 0, null);
+        //g2d.drawImage(pixelate(buffer, 5), 0, 0, null);
+        g2d.drawImage(buffer, 0, 0, null);
         //drawLanes(g2d);
         //draw horses
         for (Horse horse: horses) horse.draw(g2d);
 
 
         g2d.setColor(Color.decode("#A9731E"));
-        g2d.drawString("FIG- 8", 12, 72);
+        g2d.drawString(trackNames[trackType], 12, 72);
         g2d.setColor(Color.decode(GameManager.ACCENT_COLOR));
-        g2d.drawString("FIG-8", 10, 70);
+        g2d.drawString(trackNames[trackType], 10, 70);
     }
 
     private void drawLanes(Graphics2D g2d) {

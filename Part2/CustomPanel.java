@@ -1,13 +1,12 @@
 import javax.swing.*;
 import java.awt.*;
 
-public class CustomPanel {
+public class CustomPanel extends JPanel  {
 
-    private JPanel panel;
     private Runnable boundSetRunnable;
 
     public CustomPanel() {
-        panel = new JPanel();
+        super();
     }
 
     //instead of storing all info in the object, just store a runnable on how to initialize it
@@ -19,17 +18,11 @@ public class CustomPanel {
     }
 
     public CustomPanel setColor(Color color) {
-        panel.setBackground(color);
+        this.setBackground(color);
         return this;
     }
 
     public void invalidateBounds() {
         boundSetRunnable.run();
     }
-
-
-
-
-
-    public JPanel getPanel() {return panel;}
 }
