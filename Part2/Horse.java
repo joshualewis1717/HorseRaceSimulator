@@ -20,7 +20,7 @@ public class Horse {
     private static final Random rand = new Random();
     public static final String[] breeds = {"Thoroughbred", "Clydesdale", "Mustang"};
     public static final String[] colors = {"red", "green", "blue"};
-    public static final String[] equipmentList = {"nothing"};
+    public static final String[] equipmentList = {"nothing", "goggles", "saddle", "horseshoes", "hood"};
 
     private String name;
     private double confidence;
@@ -69,11 +69,23 @@ public class Horse {
     public String getBreed() {
         return breeds[breed];
     }
+    public void nextBreed() {
+        breed++;
+        if (breed >= breeds.length) breed = 0;
+    }
     public String getColor() {
         return colors[color];
     }
+    public void nextColor() {
+        color++;
+        if (color >= colors.length) color = 0;
+    }
     public String getEquipment() {
         return equipmentList[equipment];
+    }
+    public void nextEquipment() {
+        equipment++;
+        if (equipment >= equipmentList.length) equipment = 0;
     }
 
     double animTime;
