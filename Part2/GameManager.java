@@ -1,6 +1,7 @@
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
+import java.awt.image.BufferedImage;
 import java.io.File;
 
 public class GameManager {
@@ -14,7 +15,7 @@ public class GameManager {
     private static JLayeredPane layeredPane;
     private static Racetrack racetrack;
     private static CustomPanel sidePanel;
-    public static Font bigPixelFont, mediumPixelFont, smallPixelFont, verySmallPixelFont;
+    public static Font bigPixelFont, mediumPixelFont, smallPixelFont, verySmallPixelFont, extreemlySmallPixelFont;
     public static CustomButton mainButton1, mainButton2;
 
     public static boolean racing = false;
@@ -43,6 +44,7 @@ public class GameManager {
         mediumPixelFont = pixelFont.deriveFont(45f);
         smallPixelFont = pixelFont.deriveFont(30f);
         verySmallPixelFont = pixelFont.deriveFont(20f);
+        extreemlySmallPixelFont = pixelFont.deriveFont(15f);
 
         //set window size to 80% the monitor size
         Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
@@ -50,6 +52,8 @@ public class GameManager {
         int width = (int) (screenSize.width * scale);
         int height = (int) (screenSize.height * scale);
         frame.setSize(width, height);
+
+        frame.setMinimumSize(new Dimension(800, 600));
 
         //center window
         int x = (screenSize.width - width) / 2;
@@ -179,8 +183,11 @@ public class GameManager {
         sidePanel.removeAll();
 
         addNewLabel(sidePanel, smallPixelFont, "Customize");
+        sidePanel.add(Box.createRigidArea(new Dimension(0, 5)));
 
-
+        for (Horse horse : racetrack.getHorses()) {
+            addHorseCustomizePanel(sidePanel, horse);
+        }
 
         sidePanel.repaint();
     }
@@ -218,7 +225,7 @@ public class GameManager {
             int finalI = i;
             trackSets[i] = e -> {racetrack.setTrack(finalI); invalidate();};
         }
-        addButtonList(sidePanel, Racetrack.trackNames, trackSets);
+        addButtonList(sidePanel, Racetrack.trackNames, trackSets, verySmallPixelFont, 5);
         sidePanel.add(Box.createVerticalGlue());
 
         //weather selection
@@ -229,7 +236,7 @@ public class GameManager {
             int finalI = i;
             weatherSets[i] = e -> {racetrack.setWeather(finalI); invalidate();};
         }
-        addButtonList(sidePanel, Racetrack.weatherNames, weatherSets);
+        addButtonList(sidePanel, Racetrack.weatherNames, weatherSets, verySmallPixelFont, 5);
 
 
         sidePanel.repaint();
@@ -269,7 +276,7 @@ public class GameManager {
         inlinePanel.setAlignmentX(Component.LEFT_ALIGNMENT);
         parent.add(inlinePanel);
     }
-    private static void addButtonList(JPanel parent, String[] labels, ActionListener[] functions) {
+    private static void addButtonList(JPanel parent, String[] labels, ActionListener[] functions, Font font, int yPad) {
         JPanel inlinePanel = new JPanel();
         inlinePanel.setLayout(new BoxLayout(inlinePanel, BoxLayout.Y_AXIS)); // Horizontally align elements
         inlinePanel.setBackground(ACCENT_COLOR);
@@ -277,22 +284,73 @@ public class GameManager {
         for (int i = 0; i < labels.length && i < functions.length; i++) { //ensure this cannot crash due to two diff array lengths
             CustomButton btn = new CustomButton(labels[i]);
             btn.setBackground(ACCENT_BTN_COLOR);
-            btn.setFont(verySmallPixelFont);
+            btn.setFont(font);
             btn.addActionListener(functions[i]);
             btn.setBehaviour(() -> {
-                int width = parent.getWidth()-20; // full width
-                int height = btn.getPreferredSize().height; // keep height from font or layout
+                int width = parent==sidePanel ? parent.getWidth() - 20 : parent.getWidth(); //side panel padding
+                int height = btn.getPreferredSize().height;
                 btn.setBounds(0, btn.getY(), width, height); // apply
             });
 
             inlinePanel.add(btn);
-            inlinePanel.add(Box.createRigidArea(new Dimension(0, 5)));
+
+            if (i < labels.length - 1 && i < functions.length - 1) { // skip adding padding after last button
+                inlinePanel.add(Box.createRigidArea(new Dimension(0, yPad)));
+            }
         }
+
+
 
         inlinePanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 50*labels.length));
         inlinePanel.setAlignmentY(Component.TOP_ALIGNMENT);
         parent.add(inlinePanel);
     }
-    private static void addHorseCustomizePanel(JPanel parent, Horse horse)
+    private static void addHorseCustomizePanel(JPanel parent, Horse horse) {
+        JPanel horsePanel = new JPanel(new BorderLayout());
+        horsePanel.setBackground(ACCENT_BTN_COLOR.darker());
+        //horsePanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+        horsePanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 120));
+
+        //horse image
+        BufferedImage ogImg = horse.getIcon();
+        int size = Math.min(ogImg.getWidth(), ogImg.getHeight());
+        BufferedImage cropped = ogImg.getSubimage(0, 0, size, size);
+        Image scaledImg = cropped.getScaledInstance(100, 100, Image.SCALE_SMOOTH);
+        JLabel imageLabel = new JLabel(new ImageIcon(scaledImg));
+        horsePanel.add(imageLabel, BorderLayout.WEST);
+
+
+        JPanel rightPanel = new JPanel();
+        rightPanel.setBackground(ACCENT_BTN_COLOR.darker());
+        rightPanel.setLayout(new BoxLayout(rightPanel, BoxLayout.Y_AXIS));
+
+        JLabel name = new JLabel("  "+horse.getName());
+        name.setFont(verySmallPixelFont);
+        name.setForeground(Color.WHITE);
+        rightPanel.add(name);
+
+        //breed btn
+        CustomButton breedBtn = new CustomButton(horse.getBreed());
+        CustomButton colorBtn = new CustomButton(horse.getColor());
+        CustomButton equipmentBtn = new CustomButton(horse.getEquipment());
+
+
+        breedBtn.addActionListener(e -> { /* todo */ });
+        colorBtn.addActionListener(e -> { /* todo */ });
+        equipmentBtn.addActionListener(e -> { /* todo */ });
+
+        for (CustomButton btn : new CustomButton[]{breedBtn, colorBtn, equipmentBtn}) {
+            btn.setBackground(ACCENT_BTN_COLOR);
+            btn.setFont(extreemlySmallPixelFont);
+            //btn.setAlignmentX(Component.CENTER_ALIGNMENT); // center-align buttons
+            rightPanel.add(btn);
+            rightPanel.add(Box.createRigidArea(new Dimension(0, 5))); // Add spacing between buttons
+        }
+
+        horsePanel.add(rightPanel, BorderLayout.CENTER);
+        parent.add(horsePanel);
+        parent.add(Box.createRigidArea(new Dimension(0, 5)));
+
+    }
 
 }

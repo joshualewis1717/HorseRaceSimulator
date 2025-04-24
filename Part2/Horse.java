@@ -12,22 +12,36 @@ public class Horse {
     private int x, y; // Horse position
     private double rotationAngle = 0; //in radians
     public static final String srcImgPath = "assets/horse.png";
+    private static final String srcIconPathFolder = "assets/horseIcons/";
     private BufferedImage imgAtlas; // Horse image
+    public BufferedImage horseIcon;
     private PathIterator trackIterator;
+
+    private static final Random rand = new Random();
+    public static final String[] breeds = {"Thoroughbred", "Clydesdale", "Mustang"};
+    public static final String[] colors = {"red", "green", "blue"};
+    public static final String[] equipmentList = {"nothing"};
 
     private String name;
     private double confidence;
     private int lane;
+    private int breed;
+    private int color;
+    private int equipment;
     private Path2D track;
 
     public Horse(String name, double confidence, int lane, int x, int y) {
         this.name = name;
         this.confidence = confidence;
         this.lane = lane;
+        this.breed = rand.nextInt(breeds.length);
+        this.color = rand.nextInt(colors.length);
+        this.equipment = rand.nextInt(equipmentList.length);
         this.x = x;
         this.y = y;
         try {
             imgAtlas = ImageIO.read(getClass().getResource(srcImgPath)); // Load image
+            horseIcon = ImageIO.read(getClass().getResource(srcIconPathFolder + rand.nextInt(5) + ".png"));
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -50,6 +64,16 @@ public class Horse {
             g2d.drawImage(img, transform, null);
             g2d.setTransform(originalTransform);
         }
+    }
+
+    public String getBreed() {
+        return breeds[breed];
+    }
+    public String getColor() {
+        return colors[color];
+    }
+    public String getEquipment() {
+        return equipmentList[equipment];
     }
 
     double animTime;
@@ -94,6 +118,8 @@ public class Horse {
     public void setRotationAngle(double rads) {
         rotationAngle = rads;
     }
+
+    public BufferedImage getIcon() {return horseIcon;}
 
 
     public void goBackToStart(Racetrack racetrack, int minDuration) {

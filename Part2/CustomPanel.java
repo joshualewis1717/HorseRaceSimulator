@@ -17,11 +17,6 @@ public class CustomPanel extends JPanel  {
         return this;
     }
 
-    public CustomPanel setColor(Color color) {
-        this.setBackground(color);
-        return this;
-    }
-
     public void invalidateBounds() {
         boundSetRunnable.run();
     }

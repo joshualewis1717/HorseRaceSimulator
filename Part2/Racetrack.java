@@ -33,6 +33,8 @@ public class Racetrack extends JPanel {
         return horses.size();
     }
 
+    public ArrayList<Horse> getHorses() {return horses;}
+
     public void increaseLength() {
         length+=100;
     }
