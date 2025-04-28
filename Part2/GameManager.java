@@ -6,7 +6,6 @@ import java.io.File;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-import java.util.logging.Handler;
 
 public class GameManager {
 
@@ -64,6 +63,7 @@ public class GameManager {
         int width = (int) (screenSize.width * scale);
         int height = (int) (screenSize.height * scale);
         frame.setSize(width, height);
+        frame.setMinimumSize(new Dimension(900,430));//smallest it can go before it starts to really break
 
         //center window
         int x = (screenSize.width - width) / 2;
@@ -132,7 +132,7 @@ public class GameManager {
 
 
     private static void onResized() {
-
+        System.out.println(layeredPane.getWidth() + ":" + layeredPane.getHeight());
         sidePanelParent.setPreferredSize(new Dimension(280, layeredPane.getHeight() - 20));
         sidePanelParent.setBounds(layeredPane.getWidth() - 290, 10, 280, layeredPane.getHeight() - 20);
 
@@ -167,6 +167,8 @@ public class GameManager {
         raceTimer = new Timer(100, e -> {
             if (racing) {
                 racetrack.advanceEvent();
+                if (racetrack.allRacersDown()) racing = false;
+                updateRaceScreen();
                 invalidate(); // triggers repaint
             } else {
                 ((Timer) e.getSource()).stop(); // stop when race ends
@@ -227,7 +229,7 @@ public class GameManager {
             racetrack.increaseLength();
             invalidate();//plus function
             }, e -> {
-            racetrack.decreaseLength();
+            if (racetrack.getLength() > 100) racetrack.decreaseLength();
             invalidate();//minus function
         });
         sidePanel.add(Box.createVerticalGlue());
@@ -302,21 +304,41 @@ public class GameManager {
         sidePanel.revalidate();
         sidePanel.repaint();
 
-        // Create a label showing the race status (e.g., "Race in Progress")
-        addNewLabel(sidePanel, verySmallPixelFont, "Race in Progress");
-
         sidePanel.repaint();
     }
     public static void updateRaceScreen() {
-        // Sort horses based on their current position, or any other race variable
-        // Assuming you have a method in Horse class to get current position, e.g., getPosition()
-        //racetrack.getHorses().sort((h1, h2) -> Integer.compare(h1.getPosition(), h2.getPosition()));
+        //this method relies on the fact that the horsePanels are all created the same and the elements are in a specific order
+        Component[] sidePanelComponents = sidePanel.getComponents();
 
-        // Clear and recreate the horse panels in the new order
-        sidePanel.removeAll();
-        for (Horse horse : racetrack.getHorses()) {
-            JPanel horsePanel = createHorsePanelForRace(horse);
-            sidePanel.add(horsePanel);
+        racetrack.sortHorsesByProgress(); //now horses array is sorted based on position in race
+
+        //race screen is a label, then however many horses
+        for (int i = 1; i < sidePanelComponents.length; i++) {
+            JPanel horsePanel = (JPanel) sidePanelComponents[i];
+            Horse horse = racetrack.getHorses().get(i - 1);//i - 1 because the index in sidePanels is one ahead
+
+
+            JPanel horseStats = (JPanel) horsePanel.getComponent(1); //in order name, speed, position
+
+            String horseName = horse.getName();
+            String horsePanelName = (   (JLabel) horseStats.getComponent(0)   ).getText();
+            if (!horseName.equals(horsePanelName)) {
+                (   (JLabel) horseStats.getComponent(0)   ).setText(" " +horseName);
+                (   (JLabel) horseStats.getComponent(2)   ).setText(" Position: #"+i);
+
+                JLabel horseImg = (JLabel) horsePanel.getComponent(0);
+
+                BufferedImage ogImg = horse.getIcon();
+                int size = Math.min(ogImg.getWidth(), ogImg.getHeight());
+                BufferedImage cropped = ogImg.getSubimage(0, 0, size, size);
+                Image scaledImg = cropped.getScaledInstance(100, 100, Image.SCALE_SMOOTH);
+                horseImg.setIcon(new ImageIcon(scaledImg));
+            }
+
+
+            //now regardless update other attributes like speed
+
+
         }
 
         sidePanel.revalidate();
@@ -328,7 +350,17 @@ public class GameManager {
 
         addNewLabel(sidePanel, smallPixelFont, "RACE!");
         sidePanel.add(Box.createRigidArea(new Dimension(0, 5)));
-        addNewLabel(sidePanel, smallPixelFont, "WINNER: "+lastWinner);
+        String raceMsg = (lastWinner.equals("NOBODY")) ? "NO WINNER" : "WINNER:";
+
+        addNewLabel(sidePanel, smallPixelFont, raceMsg);
+
+        if (!lastWinner.equals("NOBODY")) {
+            for (Horse horse : racetrack.getHorses()) {
+                if (horse.getName().equals(lastWinner)) {
+                    sidePanel.add(createHorsePanelForRace(horse));
+                }
+            }
+        }
 
         sidePanel.repaint();
     }
@@ -466,13 +498,13 @@ public class GameManager {
         rightPanel.add(name);
 
         // Horse speed
-        JLabel speed = new JLabel(" Speed: 2.543m/s");  // Assuming getSpeed() exists in Horse class
+        JLabel speed = new JLabel(" Speed: --- m/s");
         speed.setFont(extreemlySmallPixelFont);
         speed.setForeground(Color.WHITE);
         rightPanel.add(speed);
 
         // Horse position
-        JLabel position = new JLabel(" Position: #69");  // Assuming getPosition() exists
+        JLabel position = new JLabel(" Position: #--");
         position.setFont(extreemlySmallPixelFont);
         position.setForeground(Color.WHITE);
         rightPanel.add(position);

@@ -32,14 +32,24 @@ public class Racetrack extends JPanel {
     public int getLanes() {
         return horses.size();
     }
+    public int getLength() {
+        return length;
+    }
 
     public ArrayList<Horse> getHorses() {return horses;}
 
+    public void sortHorsesByProgress() { //uses built in arraylist sort and uses the number of advance events as the comparator
+        horses.sort((h1, h2) -> Integer.compare(h2.getProgress(), h1.getProgress()));
+    }
+
+
     public void increaseLength() {
         length+=100;
+        loadTrack();
     }
     public void decreaseLength() {
         length-=100;
+        loadTrack();
     }
 
     public void setTrack(int trackType) {
@@ -129,12 +139,6 @@ public class Racetrack extends JPanel {
         g2d.drawString(weatherNames[weatherType], 10, 120);
     }
 
-    private void drawLanes(Graphics2D g2d) {
-        g2d.setStroke(new BasicStroke(1));
-        g2d.setColor(Color.red);
-        for (int i = 0; i < horses.size(); i++) g2d.draw(generateLane(i, true));
-    }
-
     private void drawLaneDivisions(Graphics2D g2d) {
         g2d.setStroke(new BasicStroke(2));
         g2d.setColor(Color.white);
@@ -145,8 +149,6 @@ public class Racetrack extends JPanel {
             }
         }
     }
-
-
 
     public Path2D generateLane(double laneIndex, boolean isCircular) {
         double laneWidth = trackWidth / (double) horses.size();
@@ -210,7 +212,8 @@ public class Racetrack extends JPanel {
         // y = a * sin(t) * cos(t) / (1 + sin²(t))
 
         double a = Math.min(width, height) * 0.5; // Scale factor
-        int segments = 100; // Smoothness of the curve
+        int segments = length / 10;      // Smoothness of the curve
+        if (segments < 10) segments = 10;
 
         for (int i = 0; i <= segments; i++) {
             double t = 2 * Math.PI * i / segments;
@@ -242,7 +245,8 @@ public class Racetrack extends JPanel {
 
         double a = width * 0.4;  // Semi-major axis
         double b = height * 0.4; // Semi-minor axis
-        int segments = 100;      // Smoothness of the curve
+        int segments = length / 10;      // Smoothness of the curve
+        if (segments < 10) segments = 10;
 
         for (int i = 0; i <= segments; i++) {
             double t = 2 * Math.PI * i / segments;
@@ -270,7 +274,8 @@ public class Racetrack extends JPanel {
         // Use the smaller of width or height as the diameter
         int radius = Math.min(width, height) / 3;
 
-        int segments = 100; // Smoothness of the curve
+        int segments = length / 10;      // Smoothness of the curve
+        if (segments < 10) segments = 10;
 
         for (int i = 0; i <= segments; i++) {
             double t = 2 * Math.PI * i / segments;
@@ -323,7 +328,6 @@ public class Racetrack extends JPanel {
         if (count == 0) return new Color(0, 0, 0, 0);
         return new Color(r / count, g / count, b / count, a / count);
     }
-
     private void fillBlock(BufferedImage img, int x, int y, int size, Color color) {
         for (int dy = 0; dy < size && y + dy < img.getHeight(); dy++) {
             for (int dx = 0; dx < size && x + dx < img.getWidth(); dx++) {
@@ -338,7 +342,36 @@ public class Racetrack extends JPanel {
 
     }
 
-    public void advanceEvent() {
-        for (Horse horse : horses) horse.advanceEvent();
+    public boolean allRacersDown() {
+        for (Horse horse : horses) if (!horse.hasFallen()) return false;
+        GameManager.lastWinner = "NOBODY";
+        return true;
     }
+
+
+    //these three functions work together
+    public void advanceEvent() {
+        for (Horse horse : horses) {
+            horse.advanceEvent(getFallProbability(),getDebuff());
+        }
+    }
+    public double getDebuff() {
+        switch (weatherType) {
+            case SUNNY: return 0.0; // speed
+            case CLOUDY: return 0.05; // slight slow
+            case RAINY: case MUDDY: case ICY: return 0.1; // max debuff
+            default: return 0.0; // fallback
+        }
+    }
+    private double getFallProbability() {
+        switch (weatherType) {
+            case SUNNY: return 0.005; // almost zero
+            case CLOUDY: return 0.01; // rare fall
+            case RAINY: return 0.05; // ok chance
+            case MUDDY: return 0.08; // big risk
+            case ICY: return 0.1; // guaranteed somebody's dying
+            default: return 0.005; // fallback
+        }
+    }
+
 }

@@ -1,4 +1,5 @@
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.concurrent.TimeUnit;
 import java.lang.Math;
 
@@ -16,6 +17,10 @@ public class Race
     private Horse lane2Horse;
     private Horse lane3Horse;
 
+    private static final int DEFAULT_DISTANCE = 20;
+    private static final double FALL_PROBABILITY = 0.1;
+    private static final int SLEEP_TIME_MS = 100;
+
     /**
      * Constructor for objects of class Race
      * Initially there are no horses in the lanes
@@ -29,6 +34,21 @@ public class Race
         lane1Horse = null;
         lane2Horse = null;
         lane3Horse = null;
+    }
+
+
+    public static void main(String[] args) {
+        int distance;
+        try {
+            distance = Integer.parseInt(args[0]);
+        } catch (Exception e) {
+            distance = DEFAULT_DISTANCE;
+        }
+        Race race = new Race(distance);
+        race.addHorse(new Horse('@', "PIPPI LONGSTOCKING", 0.6), 1);
+        race.addHorse(new Horse('#', "KOKOMO", 0.5), 2);
+        race.addHorse(new Horse('~', "EL JEFE", 0.4), 3);
+        race.startRace();
     }
 
     /**
@@ -57,16 +77,6 @@ public class Race
         }
     }
 
-    public static void main(String[] args){
-        for (int i = 0; i < 10; i++) {
-            Race race = new Race(20);
-            race.addHorse(new Horse('@', "ur mum", 0.4), 1);
-            race.addHorse(new Horse('#', "joe", 0.6), 2);
-            race.addHorse(new Horse('~', "shush", 0.5), 3);
-            race.startRace();
-        }
-    }
-
     /**
      * Start the race
      * The horse are brought to the start and
@@ -78,10 +88,15 @@ public class Race
         //declare a local variable to tell us when the race is finished
         boolean finished = false;
 
-        //reset all the lanes (all horses not fallen and back to 0).
-        lane1Horse.goBackToStart();
-        lane2Horse.goBackToStart();
-        lane3Horse.goBackToStart();
+        if (lane1Horse == null || lane2Horse == null || lane3Horse == null) {
+            finished = true;
+            System.out.println("\n\nCan't have a race without all the racers...");
+        } else {
+            //reset all the lanes (all horses not fallen and back to 0).
+            lane1Horse.goBackToStart();
+            lane2Horse.goBackToStart();
+            lane3Horse.goBackToStart();
+        }
 
         while (!finished)
         {
@@ -103,14 +118,19 @@ public class Race
                 if (lane2Horse.hasWon()) winner = lane2Horse;
                 if (lane3Horse.hasWon()) winner = lane3Horse;
 
+                printRace(); //display updated confidence
+
                 System.out.println("\nAnd the winner is... "+winner.getName()+"!");
             }
 
-            if (lane1Horse.hasFallen() && lane2Horse.hasFallen() && lane3Horse.hasFallen()) finished = true;
+            if (lane1Horse.hasFallen() && lane2Horse.hasFallen() && lane3Horse.hasFallen()) {
+                finished = true;
+                System.out.println("\nAll horses fell...");
+            }
 
             //wait for 100 milliseconds
             try{
-                TimeUnit.MILLISECONDS.sleep(100);
+                TimeUnit.MILLISECONDS.sleep(SLEEP_TIME_MS);
             }  catch(Exception e){}
         }
 
@@ -139,7 +159,7 @@ public class Race
             //the probability that the horse will fall is very small (max is 0.1)
             //but will also will depends exponentially on confidence
             //so if you double the confidence, the probability that it will fall is *2
-            if (Math.random() < (0.1*theHorse.getConfidence()*theHorse.getConfidence()))
+            if (Math.random() < (FALL_PROBABILITY*theHorse.getConfidence()*theHorse.getConfidence()))
             {
                 theHorse.fall();
             }
@@ -154,7 +174,7 @@ public class Race
      */
     private boolean raceWonBy(Horse theHorse)
     {
-        if (theHorse.getDistanceTravelled() == raceLength)
+        if (theHorse.getDistanceTravelled() >= raceLength)
         {
             theHorse.setAsWinner();
             return true;
@@ -171,8 +191,7 @@ public class Race
     private void printRace()
     {
         System.out.print('\u000C');  //clear the terminal window
-        //try {new ProcessBuilder("cmd", "/c", "cls").inheritIO().start().waitFor();} catch (Exception e) {e.printStackTrace();}
-        //System.out.println("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n");
+        System.out.println("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n");
 
         multiplePrint('=',raceLength+3); //top edge of track
         System.out.println();
@@ -213,9 +232,8 @@ public class Race
         //else print the horse's symbol
         if(theHorse.hasFallen())
         {
-            //System.out.print('\u2322');
-            System.out.print('.');
-            //System.out.print('');
+            System.out.print('\u2322'); //this character seems to not take up a char of space
+            System.out.print(' ');      //so print a char of space to line up the end of the track
         }
         else
         {

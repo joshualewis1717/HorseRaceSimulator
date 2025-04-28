@@ -24,27 +24,35 @@ public class Horse {
 
     private String name;
     private double confidence;
+    private boolean hasFallen;
+    private int motionCount;
     private int lane;
     private int breed;
     private int color;
     private int equipment;
     private Path2D track;
 
+    private static int imgAssignCounter = 0;
+
     public Horse(String name, double confidence, int lane, int x, int y) {
         this.name = name;
         this.confidence = confidence;
+        this.hasFallen = false;
         this.lane = lane;
         this.breed = rand.nextInt(breeds.length);
         this.color = rand.nextInt(colors.length);
+        this.motionCount = 0;
         this.equipment = rand.nextInt(equipmentList.length);
         this.x = x;
         this.y = y;
         try {
             imgAtlas = ImageIO.read(getClass().getResource(srcImgPath)); // Load image
-            horseIcon = ImageIO.read(getClass().getResource(srcIconPathFolder + rand.nextInt(5) + ".png"));
+            horseIcon = ImageIO.read(getClass().getResource(srcIconPathFolder + imgAssignCounter + ".png"));
         } catch (IOException e) {
             e.printStackTrace();
         }
+        imgAssignCounter++;
+        if (imgAssignCounter > 4) imgAssignCounter = 0;
     }
 
 
@@ -141,32 +149,59 @@ public class Horse {
         double[] coords = new double[6];
         trackIterator.currentSegment(coords);
         animateTo((int) coords[0], (int) coords[1], minDuration);
+        hasFallen = false;
+        motionCount = 0;
     }
 
-    public void advanceEvent() {
-        if (trackIterator.isDone()) {
-            GameManager.setWinner(this);
-            System.out.println("CALLED" + name);
-            return;
-        }
-
-        if (Math.random() < confidence) {
-            double[] coords = new double[6];
-            int segmentType = trackIterator.currentSegment(coords);
-
-            if (segmentType != PathIterator.SEG_CLOSE && !trackIterator.isDone()) {
-                if (!((int) coords[0] == 0)) {//stop them teleporting to the origin when done for some reason
-                    setRotationAngle((int) coords[0], (int) coords[1]);
-                    x = (int) coords[0];
-                    y = (int) coords[1];
-                }
+    public void advanceEvent(double fallProbability, double debuff) {
+        if  (!hasFallen)
+        {
+            if (trackIterator.isDone()) {
+                GameManager.setWinner(this);
+                System.out.println("CALLED" + name);
+                return;
             }
-            trackIterator.next();
+
+            double debuffedConfidence = confidence - debuff;
+            if (debuffedConfidence < 0.1) debuffedConfidence = 0.1;
+
+            if (Math.random() < debuffedConfidence) {
+                double[] coords = new double[6];
+                int segmentType = trackIterator.currentSegment(coords);
+
+                if (segmentType != PathIterator.SEG_CLOSE && !trackIterator.isDone()) {
+                    if (!((int) coords[0] == 0)) {//stop them teleporting to the origin when done for some reason
+                        setRotationAngle((int) coords[0], (int) coords[1]);
+                        x = (int) coords[0];
+                        y = (int) coords[1];
+                    }
+                }
+                trackIterator.next();
+                motionCount++;
+            }
+
+            if (Math.random() < (fallProbability*debuffedConfidence*debuffedConfidence))
+            {
+                fall();
+            }
         }
     }
 
+    public int getProgress() {
+        return motionCount;
+    }
+
+
+    public void fall() {
+        confidence -= 0.1;
+        hasFallen = true;
+    }
 
     public String getName() {
         return name;
+    }
+
+    public boolean hasFallen() {
+        return hasFallen;
     }
 }

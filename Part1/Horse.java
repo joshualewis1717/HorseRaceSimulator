@@ -71,12 +71,6 @@ public class Horse
         return hasFallen;
     }
 
-    public boolean hasWon()
-    {
-        confidence += 0.1;
-        return hasWon;
-    }
-
     public void moveForward()
     {
         distanceTraveled++;
@@ -85,8 +79,8 @@ public class Horse
     public void setConfidence(double newConfidence)
     {
         if (newConfidence < 0) {newConfidence = 0;}
-        if (newConfidence > 1) {newConfidence = 1;}
-        this.confidence = newConfidence;
+        else if (newConfidence > 1) {newConfidence = 1;}
+        confidence = newConfidence;
     }
 
     public void setSymbol(char newSymbol)
@@ -94,7 +88,14 @@ public class Horse
         this.symbol = newSymbol;
     }
 
+
+    public boolean hasWon()
+    {
+        return hasWon;
+    }
+
     public void setAsWinner() {
+        confidence += 0.1;
         hasWon = true;
     }
 
