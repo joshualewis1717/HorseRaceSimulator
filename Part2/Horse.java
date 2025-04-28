@@ -6,6 +6,9 @@ import java.awt.geom.PathIterator;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.util.Random;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import javax.imageio.ImageIO;
 
 public class Horse {
@@ -24,6 +27,7 @@ public class Horse {
     public static final String[] colors = {"no color","Red", "Green", "Blue", "Yellow", "Cyan", "Magenta", "Orange", "Pink"};
     public static final Color[] colorsObj = {null,Color.RED, Color.GREEN, Color.BLUE, Color.YELLOW, Color.CYAN, Color.MAGENTA, Color.ORANGE, Color.PINK};
     public static final String[] equipmentList = {"no equipment", "goggles", "saddle", "horseshoes", "hood"};
+    public static final double[] equipmentEffect = {0.0, 0.1, 0.2, 0.15, -0.1};
 
     private String name;
     private double confidence;
@@ -36,6 +40,16 @@ public class Horse {
     private Path2D track;
 
     private static int imgAssignCounter = 0;
+
+    //frolic
+    private javax.swing.Timer frolicTimer;
+    private boolean frolicing = false;
+    private Random r = new Random();
+    private static int[] frolicArea = {800,600};//just a basic small size until its updated
+
+    //anim
+    private javax.swing.Timer animTimer;
+
 
     public Horse(String name, double confidence, int lane, int x, int y) {
         this.name = name;
@@ -118,6 +132,48 @@ public class Horse {
         }
     }
 
+    //frolic
+    public static void setFrolicArea(int width, int height) {
+        frolicArea[0] = width;
+        frolicArea[1] = height;
+    }
+    public void marshal() {
+        frolicing = false;
+        if (animTimer != null) animTimer.stop();
+    }
+    public void frolic(){
+        frolicing = true;
+
+        frolicTimer = new javax.swing.Timer(3000 + r.nextInt(4000), e -> {
+            if (frolicing) {
+                doFrolic();
+            } else {
+                ((javax.swing.Timer) e.getSource()).stop(); // stop when race ends
+            }
+        });
+        doFrolic();
+        frolicTimer.start();
+    }
+    private void doFrolic() {
+        if (imgIndex == 3) {
+            imgIndex = 1;
+        } else {
+            if (r.nextFloat() < 0.6) { //either frolic or graze
+                int range = 200; // how far the horse can wander from its current spot
+                int newX = x + r.nextInt(range * 2 + 1) - range;
+                int newY = y + r.nextInt(range * 2 + 1) - range;
+
+                newX = Math.max(100, Math.min(newX, frolicArea[0] - 100));//clamp to frolic area
+                newY = Math.max(100, Math.min(newY, frolicArea[1] - 100));
+
+                animateTo(newX, newY, 2000);
+            } else {
+                imgIndex = 3;
+            }
+        }
+    }
+    public boolean isFrolicing() {return frolicing;}
+
     public String getBreed() {
         return breeds[breed];
     }
@@ -156,7 +212,7 @@ public class Horse {
 
         setRotationAngle(targetX, targetY);
 
-        Timer timer = new Timer(32, e -> {
+        animTimer = new Timer(32, e -> {
             animTime += step;
 
             // Stop the animation when the progress reaches 1
@@ -165,7 +221,6 @@ public class Horse {
                 ((Timer) e.getSource()).stop(); // Stop the timer
                 x = targetX;
                 y = targetY;
-                setRotationAngle(0);
                 GameManager.invalidate();
             } else {
                 x = (int) (initialX + animTime * dx);
@@ -176,12 +231,13 @@ public class Horse {
             }
         });
 
-        timer.start();
+        animTimer.start();
     }
 
     private void flipWalkingFrames() {
         if (imgIndex == 0) imgIndex = 1;
-        else if (imgIndex == 1) imgIndex = 0;
+        else imgIndex = 0;
+
     }
 
     public void setRotationAngle(int targetX, int targetY) {
@@ -194,30 +250,37 @@ public class Horse {
     public BufferedImage getIcon() {return horseIcon;}
 
 
-    public void goBackToStart(Racetrack racetrack, int minDuration) {
+    public void goBackToStart(Racetrack racetrack, int duration) {
         track = racetrack.generateLane(lane,true);
 
         trackIterator = track.getPathIterator(null);
         double[] coords = new double[6];
         trackIterator.currentSegment(coords);
-        animateTo((int) coords[0], (int) coords[1], minDuration);
+        animateTo((int) coords[0], (int) coords[1], duration);
         hasFallen = false;
         motionCount = 0;
+
+        ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
+        executor.schedule(() -> {setRotationAngle(0);}, duration, TimeUnit.MILLISECONDS);
+        executor.shutdown();
     }
+
+
 
     public void advanceEvent(double fallProbability, double debuff) {
         if  (!hasFallen)
         {
             if (trackIterator.isDone()) {
                 GameManager.setWinner(this);
-                System.out.println("CALLED" + name);
+                this.confidence += 0.1;                      //<------------buffed confidence here
                 return;
             }
 
-            double debuffedConfidence = confidence - debuff;
-            if (debuffedConfidence < 0.1) debuffedConfidence = 0.1;
+            double updatedConfidence = confidence - debuff + equipmentEffect[equipment];
+            if (updatedConfidence < 0.1) updatedConfidence = 0.1;
+            else if (updatedConfidence > 1.0) updatedConfidence = 1.0;
 
-            if (Math.random() < debuffedConfidence) {
+            if (Math.random() < updatedConfidence) {
                 double[] coords = new double[6];
                 int segmentType = trackIterator.currentSegment(coords);
 
@@ -233,7 +296,7 @@ public class Horse {
                 motionCount++;
             }
 
-            if (Math.random() < (fallProbability*debuffedConfidence*debuffedConfidence))
+            if (Math.random() < (fallProbability*updatedConfidence*updatedConfidence))
             {
                 fall();
             }
@@ -249,7 +312,7 @@ public class Horse {
         confidence -= 0.1;
         hasFallen = true;
         imgIndex = 2;//fallen img in atlas
-        tintImg(Color.BLACK);
+        tintImg(Color.BLACK); //do it 4 times to you can actually see it
         tintImg(Color.BLACK);
         tintImg(Color.BLACK);
         tintImg(Color.BLACK);

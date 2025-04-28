@@ -7,11 +7,14 @@ import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Random;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 public class Racetrack extends JPanel {
 
     private static int trackWidth = 100;
-    private static int length = 1500;
+    private static int length = 150;
     private Path2D track;
     private ArrayList<Horse> horses; //lanes is the same as horses.size()
 
@@ -61,11 +64,11 @@ public class Racetrack extends JPanel {
 
 
     public void increaseLength() {
-        length+=100;
+        length+=10;
         loadTrack();
     }
     public void decreaseLength() {
-        length-=100;
+        length-=10;
         loadTrack();
     }
 
@@ -91,25 +94,36 @@ public class Racetrack extends JPanel {
     }
 
     public void killLastHorse() {
-        if (horses.size() > 1) horses.removeLast();
+        if (horses.size() > 1) {
+            Horse horse = horses.removeLast();
+            horse.marshal();//just cancels any animations and timers to allow java to garbage collect
+        }
     }
 
     public void addHorse(String name, double confidence){
         Random r = new Random();
-        SwingUtilities.invokeLater(() ->
-                horses.add(new Horse(
-                        name,
-                        confidence,
-                        horses.size(),
-                        (int) (this.getWidth() * r.nextFloat()),
-                        (int) (this.getHeight() * r.nextFloat()))
-                )
-
-        );
+        SwingUtilities.invokeLater(() -> {
+            Horse horse = new Horse(
+                    name,
+                    confidence,
+                    horses.size(),
+                    (int) (20 + this.getWidth() * r.nextFloat() * 0.9f),//not rlly accurate padding but it works
+                    (int) (20 + this.getHeight() * r.nextFloat() * 0.9f));
+            horse.frolic();//horses can only be added by users when they are allowed to roam;
+            horses.add(horse);
+        });
     }
 
+    public void releaseHorses() {
+        for (Horse horse: horses) if (!horse.isFrolicing()) horse.frolic();
+    }
+    public void marshalHorses() {
+        for (Horse horse: horses) horse.marshal();
+    }
 
-
+    public void onResized() {
+        Horse.setFrolicArea(getWidth(), getHeight());
+    }
 
     @Override
     protected void paintComponent(Graphics g) {
@@ -229,11 +243,9 @@ public class Racetrack extends JPanel {
         // y = a * sin(t) * cos(t) / (1 + sin²(t))
 
         double a = Math.min(width, height) * 0.5; // Scale factor
-        int segments = length / 10;      // Smoothness of the curve
-        if (segments < 10) segments = 10;
 
-        for (int i = 0; i <= segments; i++) {
-            double t = 2 * Math.PI * i / segments;
+        for (int i = 0; i <= length; i++) {
+            double t = 2 * Math.PI * i / length;
             double denominator = 1 + Math.pow(Math.sin(t), 2);
             double x = a * Math.cos(t) / denominator;
             double y = a * Math.sin(t) * Math.cos(t) / denominator;
@@ -262,11 +274,9 @@ public class Racetrack extends JPanel {
 
         double a = width * 0.4;  // Semi-major axis
         double b = height * 0.25; // Semi-minor axis
-        int segments = length / 10;      // Smoothness of the curve
-        if (segments < 10) segments = 10;
 
-        for (int i = 0; i <= segments; i++) {
-            double t = 2 * Math.PI * i / segments;
+        for (int i = 0; i <= length; i++) {
+            double t = 2 * Math.PI * i / length;
             double x = a * Math.cos(t);
             double y = b * Math.sin(t);
 
@@ -291,11 +301,9 @@ public class Racetrack extends JPanel {
         // Use the smaller of width or height as the diameter
         int radius = Math.min(width, height) / 4;
 
-        int segments = length / 10;      // Smoothness of the curve
-        if (segments < 10) segments = 10;
 
-        for (int i = 0; i <= segments; i++) {
-            double t = 2 * Math.PI * i / segments;
+        for (int i = 0; i <= length; i++) {
+            double t = 2 * Math.PI * i / length;
             double x = radius * Math.cos(t);
             double y = radius * Math.sin(t);
 
@@ -354,9 +362,9 @@ public class Racetrack extends JPanel {
     }
 
 
-    public void resetTrack(int minDuration) {
-        for (Horse horse : horses) horse.goBackToStart(this, minDuration);
-
+    public void resetTrack(int duration) {
+        marshalHorses();
+        for (Horse horse : horses) horse.goBackToStart(this, duration);
     }
 
     public boolean allRacersDown() {
