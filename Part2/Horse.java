@@ -24,8 +24,9 @@ public class Horse {
 
     private static final Random rand = new Random();
     public static final String[] breeds = {"Thoroughbred", "Clydesdale", "Mustang"};
+    public static final double[] breedEffect = {0.15, -0.05, 0.05};
     public static final String[] colors = {"no color","Red", "Green", "Blue", "Yellow", "Cyan", "Magenta", "Orange", "Pink"};
-    public static final Color[] colorsObj = {null,Color.RED, Color.GREEN, Color.BLUE, Color.YELLOW, Color.CYAN, Color.MAGENTA, Color.ORANGE, Color.PINK};
+    public static final Color[] colorsObj = {null, Color.RED, Color.GREEN, Color.BLUE, Color.YELLOW, Color.CYAN, Color.MAGENTA, Color.ORANGE, Color.PINK};
     public static final String[] equipmentList = {"no equipment", "goggles", "saddle", "horseshoes", "hood"};
     public static final double[] equipmentEffect = {0.0, 0.1, 0.2, 0.15, -0.1};
 
@@ -103,6 +104,7 @@ public class Horse {
     public void reloadImg() {
         try {
             imgAtlas = ImageIO.read(getClass().getResource(srcImgPath)); // Load image atlas
+            tintImg(colorsObj[color]);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -267,7 +269,7 @@ public class Horse {
 
 
 
-    public void advanceEvent(double fallProbability, double debuff) {
+    public void advanceEvent(double fallProbability, double weatherDebuff) {
         if  (!hasFallen)
         {
             if (trackIterator.isDone()) {
@@ -276,7 +278,7 @@ public class Horse {
                 return;
             }
 
-            double updatedConfidence = confidence - debuff + equipmentEffect[equipment];
+            double updatedConfidence = confidence - weatherDebuff + equipmentEffect[equipment] + breedEffect[breed];
             if (updatedConfidence < 0.1) updatedConfidence = 0.1;
             else if (updatedConfidence > 1.0) updatedConfidence = 1.0;
 

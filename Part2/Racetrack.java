@@ -79,6 +79,9 @@ public class Racetrack extends JPanel {
 
     public void setWeather(int weather) {
         this.weatherType = weather;
+        if (weather == SUNNY || weather == MUDDY) GameManager.setBackgroundColor(GameManager.BACKGROUND_COLOR);
+        if (weather == CLOUDY || weather == ICY) GameManager.setBackgroundColor(Color.decode("#cd9b1f"));
+        if (weather == RAINY) GameManager.setBackgroundColor(Color.decode("#bb8c17"));
         invalidate();
     }
 
@@ -109,13 +112,14 @@ public class Racetrack extends JPanel {
                     horses.size(),
                     (int) (20 + this.getWidth() * r.nextFloat() * 0.9f),//not rlly accurate padding but it works
                     (int) (20 + this.getHeight() * r.nextFloat() * 0.9f));
-            horse.frolic();//horses can only be added by users when they are allowed to roam;
+            horse.frolic();
             horses.add(horse);
         });
     }
 
     public void releaseHorses() {
         for (Horse horse: horses) if (!horse.isFrolicing()) horse.frolic();
+        for (Horse horse: horses) horse.reloadImg(); //remove any dark fallen tint
     }
     public void marshalHorses() {
         for (Horse horse: horses) horse.marshal();

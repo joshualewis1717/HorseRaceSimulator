@@ -30,9 +30,9 @@ public class GameManager {
         setScreen(RACE_CONFIG);
 
         SwingUtilities.invokeLater(() -> {
-            racetrack.addHorse("stfu", 0.5);
-            racetrack.addHorse("idiot", 0.5);
-            racetrack.addHorse("dumbass", 0.5);
+            racetrack.addHorse("PIPI", 0.5);
+            racetrack.addHorse("EL JEFE", 0.5);
+            racetrack.addHorse("KOKOMO", 0.5);
             racetrack.onResized();
         });
     }
@@ -114,6 +114,9 @@ public class GameManager {
         frame.addComponentListener(new ComponentAdapter() {@Override public void componentResized(ComponentEvent e) {onResized();}});
     }
 
+    public static void setBackgroundColor(Color color) {
+        layeredPane.setBackground(color);
+    }
 
     private static void onResized() {
         int height = layeredPane.getHeight();
@@ -185,23 +188,23 @@ public class GameManager {
         screen = phase;
         if (phase == RACE_CONFIG) {
             setRaceConfigureScreen();
-            repurposeButton(mainButton1,"", _ -> {});
-            repurposeButton(mainButton2, "NEXT", _ -> setScreen(HORSE_CONFIG));
+            repurposeButton(mainButton1,"", e -> {});
+            repurposeButton(mainButton2, "NEXT", e -> setScreen(HORSE_CONFIG));
             racetrack.releaseHorses();
         } else if (phase == HORSE_CONFIG) {
             setHorseConfigureScreen();
-            repurposeButton(mainButton1,"BACK", _ -> setScreen(RACE_CONFIG));
-            repurposeButton(mainButton2,"START", _ -> setScreen(RACE));
+            repurposeButton(mainButton1,"BACK", e -> setScreen(RACE_CONFIG));
+            repurposeButton(mainButton2,"START", e -> setScreen(RACE));
             racetrack.resetTrack(1000); //animate horses taking starting position
         } else if (phase == RACE) {
             setRaceScreen();
-            repurposeButton(mainButton1,"PLEASE", _ -> {});
-            repurposeButton(mainButton2,"WAIT", _ -> {});
+            repurposeButton(mainButton1,"PLEASE", e -> {});
+            repurposeButton(mainButton2,"WAIT", e -> {});
             startRaceGUI();
         } else if (phase == RACE_END) {
             setRaceEndScreen();
-            repurposeButton(mainButton1,"", _ -> {});
-            repurposeButton(mainButton2,"RESTART", _ -> setScreen(RACE_CONFIG));
+            repurposeButton(mainButton1,"", e -> {});
+            repurposeButton(mainButton2,"RESTART", e -> setScreen(RACE_CONFIG));
             racetrack.releaseHorses();
         }
     }
@@ -227,10 +230,10 @@ public class GameManager {
 
         //Length
         addPlusMinusControl(sidePanel,"Length", e -> {
-            racetrack.increaseLength();
+            if (racetrack.getLength() < 500) racetrack.increaseLength();
             invalidate();//plus function
             }, e -> {
-            if (racetrack.getLength() > 100) racetrack.decreaseLength();
+            if (racetrack.getLength() > 20) racetrack.decreaseLength();
             invalidate();//minus function
         });
         sidePanel.add(Box.createVerticalGlue());
@@ -271,6 +274,7 @@ public class GameManager {
 
         // Configure layout constraints for components
         int yPos = 60;  // Vertical position for the next components
+        System.out.println("HORSES SIZE: "+ racetrack.getHorses().size());
         for (Horse horse : racetrack.getHorses()) {
             JPanel horsePanel = createHorseCustomizePanel(sidePanel, horse);
             sidePanel.add(horsePanel);
