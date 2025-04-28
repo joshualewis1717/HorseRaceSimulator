@@ -14,13 +14,16 @@ public class Horse {
     public static final String srcImgPath = "assets/horse.png";
     private static final String srcIconPathFolder = "assets/horseIcons/";
     private BufferedImage imgAtlas; // Horse image
+    private static final float TINT_STRENGTH = 0.1f;
+    private int imgIndex = 0;//current image in the atlas (3 images)
     public BufferedImage horseIcon;
     private PathIterator trackIterator;
 
     private static final Random rand = new Random();
     public static final String[] breeds = {"Thoroughbred", "Clydesdale", "Mustang"};
-    public static final String[] colors = {"red", "green", "blue"};
-    public static final String[] equipmentList = {"nothing", "goggles", "saddle", "horseshoes", "hood"};
+    public static final String[] colors = {"no color","Red", "Green", "Blue", "Yellow", "Cyan", "Magenta", "Orange", "Pink"};
+    public static final Color[] colorsObj = {null,Color.RED, Color.GREEN, Color.BLUE, Color.YELLOW, Color.CYAN, Color.MAGENTA, Color.ORANGE, Color.PINK};
+    public static final String[] equipmentList = {"no equipment", "goggles", "saddle", "horseshoes", "hood"};
 
     private String name;
     private double confidence;
@@ -40,9 +43,9 @@ public class Horse {
         this.hasFallen = false;
         this.lane = lane;
         this.breed = rand.nextInt(breeds.length);
-        this.color = rand.nextInt(colors.length);
+        this.color = 0;
         this.motionCount = 0;
-        this.equipment = rand.nextInt(equipmentList.length);
+        this.equipment = 0;
         this.x = x;
         this.y = y;
         try {
@@ -55,20 +58,61 @@ public class Horse {
         if (imgAssignCounter > 4) imgAssignCounter = 0;
     }
 
+    public void tintImg(Color color) {
+        if (color == null) return; //for when there is no tint
+        for (int y = 0; y < imgAtlas.getHeight(); y++) {
+            for (int x = 0; x < imgAtlas.getWidth(); x++) {
+                int pixel = imgAtlas.getRGB(x, y);
+
+                int alpha = (pixel >> 24) & 0xFF;
+                int r = (pixel >> 16) & 0xFF;
+                int g = (pixel >> 8) & 0xFF;
+                int b = (pixel) & 0xFF;
+
+                if (alpha < 255) continue;
+
+
+                r = (int) (r * (1 - TINT_STRENGTH) + color.getRed() * TINT_STRENGTH);
+                g = (int) (g * (1 - TINT_STRENGTH) + color.getGreen() * TINT_STRENGTH);
+                b = (int) (b * (1 - TINT_STRENGTH) + color.getBlue() * TINT_STRENGTH);
+
+                // Make sure RGB values are within the valid range (0-255)
+                r = Math.min(255, Math.max(0, r));
+                g = Math.min(255, Math.max(0, g));
+                b = Math.min(255, Math.max(0, b));
+
+                int newPixel = (255 << 24) | (r << 16) | (g << 8) | b;
+                imgAtlas.setRGB(x, y, newPixel);
+            }
+        }
+    }
+    public void reloadImg() {
+        try {
+            imgAtlas = ImageIO.read(getClass().getResource(srcImgPath)); // Load image atlas
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
 
     public void draw(Graphics2D g2d) {
         if (imgAtlas != null) {
             AffineTransform originalTransform = g2d.getTransform();
 
+            //find image from img atlas
+            int offset = 0;
+            if (imgIndex == 1) offset = 160;
+            else if (imgIndex == 2) offset = 330;
+            BufferedImage img = imgAtlas.getSubimage(0+offset, 0, 110, 567);
 
-            BufferedImage img = imgAtlas.getSubimage(0, 0, 110, 567);
-
+            //scale and rotate to match final position
             AffineTransform transform = new AffineTransform();
             float scale = 0.2f;
             transform.translate(x - 0.5*scale*img.getWidth(), y - 0.5*scale*img.getHeight());
             transform.scale(scale,scale);
             transform.rotate(rotationAngle, (double) img.getWidth() /2, (double) img.getHeight() /2);
 
+            //draw image and reset the transform because the object is borrowed and used elsewhere
             g2d.drawImage(img, transform, null);
             g2d.setTransform(originalTransform);
         }
@@ -87,6 +131,7 @@ public class Horse {
     public void nextColor() {
         color++;
         if (color >= colors.length) color = 0;
+        reloadImg(); tintImg(colorsObj[color]);
     }
     public String getEquipment() {
         return equipmentList[equipment];
@@ -126,10 +171,17 @@ public class Horse {
                 x = (int) (initialX + animTime * dx);
                 y = (int) (initialY + animTime * dy);
                 GameManager.invalidate();
+
+                if ((int)(animTime * totalFrames) % 4 == 0) flipWalkingFrames(); //once every 4 frames
             }
         });
 
         timer.start();
+    }
+
+    private void flipWalkingFrames() {
+        if (imgIndex == 0) imgIndex = 1;
+        else if (imgIndex == 1) imgIndex = 0;
     }
 
     public void setRotationAngle(int targetX, int targetY) {
@@ -174,6 +226,7 @@ public class Horse {
                         setRotationAngle((int) coords[0], (int) coords[1]);
                         x = (int) coords[0];
                         y = (int) coords[1];
+                        flipWalkingFrames();
                     }
                 }
                 trackIterator.next();
@@ -195,6 +248,11 @@ public class Horse {
     public void fall() {
         confidence -= 0.1;
         hasFallen = true;
+        imgIndex = 2;//fallen img in atlas
+        tintImg(Color.BLACK);
+        tintImg(Color.BLACK);
+        tintImg(Color.BLACK);
+        tintImg(Color.BLACK);
     }
 
     public String getName() {

@@ -160,6 +160,7 @@ public class GameManager {
     private static Timer raceTimer;
     private static void startRaceGUI() {
         racing = true;
+        racetrack.logStart();
 
         raceTimer = new Timer(100, e -> {
             if (racing) {
@@ -177,15 +178,6 @@ public class GameManager {
     }
     
     
-    private static JButton getNewStyledButton(String text) {
-        JButton button = new JButton(text);
-        button.setForeground(Color.WHITE);
-        button.setFocusPainted(false);
-        button.setBorderPainted(false);
-        return button;
-    }
-
-
 
     //screens
     public static final int RACE_CONFIG = 0, HORSE_CONFIG = 1, RACE = 2, RACE_END = 3;
@@ -341,8 +333,9 @@ public class GameManager {
                 horseImg.setIcon(new ImageIcon(scaledImg));
             }
 
-
-            //now regardless update other attributes like speed
+            JLabel speedLabel = (JLabel) horseStats.getComponent(1);
+            if (horse.hasFallen()) speedLabel.setText(" FALLEN :(");
+            else speedLabel.setText(" Speed: "+racetrack.getSpeed(horse)+" m/s");
 
 
         }
@@ -350,7 +343,6 @@ public class GameManager {
         sidePanel.revalidate();
         sidePanel.repaint();
     }
-
     private static void setRaceEndScreen() {
         sidePanel.removeAll();
 
@@ -372,6 +364,13 @@ public class GameManager {
     }
 
     //add premade custom components
+    private static JButton getNewStyledButton(String text) {
+        JButton button = new JButton(text);
+        button.setForeground(Color.WHITE);
+        button.setFocusPainted(false);
+        button.setBorderPainted(false);
+        return button;
+    }
     private static void addNewLabel(JPanel parent, Font font, String label) {
         JLabel jLabel = new JLabel(label);
         jLabel.setFont(font);
@@ -463,8 +462,8 @@ public class GameManager {
         JButton colorBtn = getNewStyledButton(horse.getColor());
         JButton equipmentBtn = getNewStyledButton(horse.getEquipment());
 
-        breedBtn.addActionListener(e -> {horse.nextBreed(); breedBtn.setText(horse.getBreed());});
-        colorBtn.addActionListener(e -> {horse.nextColor(); colorBtn.setText(horse.getColor());});
+        breedBtn.addActionListener(e -> {horse.nextBreed(); breedBtn.setText(horse.getBreed()); invalidate();});
+        colorBtn.addActionListener(e -> {horse.nextColor(); colorBtn.setText(horse.getColor()); invalidate();});
         equipmentBtn.addActionListener(e -> {horse.nextEquipment(); equipmentBtn.setText(horse.getEquipment());});
 
         for (JButton btn : new JButton[]{breedBtn, colorBtn, equipmentBtn}) {

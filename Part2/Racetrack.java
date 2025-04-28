@@ -3,6 +3,8 @@ import java.awt.*;
 import java.awt.geom.Path2D;
 import java.awt.geom.PathIterator;
 import java.awt.image.BufferedImage;
+import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Random;
 
@@ -20,6 +22,9 @@ public class Racetrack extends JPanel {
     public static final String[] weatherNames = {"SUNNY", "CLOUDY", "RAINY", "MUDDY", "ICY"};
     private int weatherType;
     private int trackType;
+
+    //speed metrics
+    private LocalDateTime startTime;
 
 
     public Racetrack(int track, int weather) {
@@ -40,6 +45,15 @@ public class Racetrack extends JPanel {
 
     public void sortHorsesByProgress() { //uses built in arraylist sort and uses the number of advance events as the comparator
         horses.sort((h1, h2) -> Integer.compare(h2.getProgress(), h1.getProgress()));
+    }
+
+    //used as a reference to calculate the speed of the horse
+    public void logStart() {
+        startTime = LocalDateTime.now();
+    }
+    public String getSpeed(Horse horse) {
+        float speed = ((float) horse.getProgress()) / Duration.between(startTime, LocalDateTime.now()).getSeconds();
+        return String.format("%.2f", speed);
     }
 
 
@@ -244,7 +258,7 @@ public class Racetrack extends JPanel {
         // y = b * sin(t)
 
         double a = width * 0.4;  // Semi-major axis
-        double b = height * 0.4; // Semi-minor axis
+        double b = height * 0.25; // Semi-minor axis
         int segments = length / 10;      // Smoothness of the curve
         if (segments < 10) segments = 10;
 
@@ -272,7 +286,7 @@ public class Racetrack extends JPanel {
         Path2D.Double circle = new Path2D.Double();
 
         // Use the smaller of width or height as the diameter
-        int radius = Math.min(width, height) / 3;
+        int radius = Math.min(width, height) / 4;
 
         int segments = length / 10;      // Smoothness of the curve
         if (segments < 10) segments = 10;
