@@ -20,7 +20,7 @@ public class GameManager {
     private static JScrollPane sidePanelParent;
     private static JPanel sidePanel;
     public static Font bigPixelFont, mediumPixelFont, smallPixelFont, verySmallPixelFont, extreemlySmallPixelFont;
-    public static CustomButton mainButton1, mainButton2;
+    public static JButton mainButton1, mainButton2;
 
     public static boolean racing = false;
     public static String lastWinner = "none";
@@ -98,27 +98,14 @@ public class GameManager {
 
 
         //buttons
-        mainButton1 = new CustomButton(""); //create buttons
-        mainButton2 = new CustomButton("");
+        mainButton1 = getNewStyledButton(""); //create buttons
+        mainButton2 = getNewStyledButton("");
 
-        for (CustomButton button : new CustomButton[] {mainButton1, mainButton2}) { //apply duplicate instructions
+        for (JButton button : new JButton[] {mainButton1, mainButton2}) { //apply duplicate instructions
             button.setBackground(ACCENT_COLOR);
             button.setFont(mediumPixelFont);
         }
-
-        mainButton1.setBehaviour(()->{
-            int w = ( 3*layeredPane.getWidth()/8 ) - 20;
-            int h = 80;
-            mainButton1.setBounds(10, layeredPane.getHeight() - h - 10, w, h);
-        });
-
-        mainButton2.setBehaviour(()->{
-            int w = ( 3*layeredPane.getWidth()/8 ) - 20;
-            int h = 80;
-            mainButton2.setBounds(20 + w, layeredPane.getHeight() - h - 10, w, h);
-        });
-
-
+        
         layeredPane.add(racetrack, JLayeredPane.PALETTE_LAYER);
         layeredPane.add(sidePanelParent, JLayeredPane.PALETTE_LAYER);
         layeredPane.add(mainButton1, JLayeredPane.PALETTE_LAYER);
@@ -132,11 +119,21 @@ public class GameManager {
 
 
     private static void onResized() {
-        System.out.println(layeredPane.getWidth() + ":" + layeredPane.getHeight());
-        sidePanelParent.setPreferredSize(new Dimension(280, layeredPane.getHeight() - 20));
-        sidePanelParent.setBounds(layeredPane.getWidth() - 290, 10, 280, layeredPane.getHeight() - 20);
+        int height = layeredPane.getHeight();
+        int width = layeredPane.getWidth();
 
-        racetrack.setBounds( 10, 10, (3*layeredPane.getWidth()/4) - 30, layeredPane.getHeight() - 20);
+
+        //padding of 10px included in all calculations
+        sidePanelParent.setPreferredSize(new Dimension(280, height - 20));
+        sidePanelParent.setBounds(width - 290, 10, 280, height - 20);
+
+        int availableWidth = width - 300; //available space to fill
+        int buttonY = height - 90;
+        mainButton1.setBounds(10, buttonY, (availableWidth - 3 * 10) / 2, 80); // adjusted for padding
+        mainButton2.setBounds(availableWidth / 2 + 10, buttonY, (availableWidth - 3 * 10) / 2, 80); // adjusted for padding
+
+
+        racetrack.setBounds( 10, 10, (3*width/4) - 30, height - 20);
         racetrack.loadTrack();
 
 
@@ -178,6 +175,15 @@ public class GameManager {
 
         raceTimer.start();
     }
+    
+    
+    private static JButton getNewStyledButton(String text) {
+        JButton button = new JButton(text);
+        button.setForeground(Color.WHITE);
+        button.setFocusPainted(false);
+        button.setBorderPainted(false);
+        return button;
+    }
 
 
 
@@ -204,9 +210,9 @@ public class GameManager {
             repurposeButton(mainButton2,"RESTART", _ -> setScreen(RACE_CONFIG));
         }
     }
-    private static void repurposeButton(CustomButton button, String label, ActionListener function) {
+    private static void repurposeButton(JButton button, String label, ActionListener function) {
         for (ActionListener al : button.getActionListeners()) {button.removeActionListener(al);}
-        button.setText(label); button.setAction(function);
+        button.setText(label); button.addActionListener(function);
     }
 
     //Side panel screens
@@ -379,10 +385,10 @@ public class GameManager {
         JLabel jLabel = new JLabel(label);
         jLabel.setFont(verySmallPixelFont);
         jLabel.setForeground(Color.WHITE);
-        CustomButton plusButton = new CustomButton("+");
-        CustomButton minusButton = new CustomButton("-");
+        JButton plusButton = getNewStyledButton("+");
+        JButton minusButton = getNewStyledButton("-");
 
-        for (CustomButton btn : new CustomButton[] {plusButton, minusButton}) {
+        for (JButton btn : new JButton[] {plusButton, minusButton}) {
             btn.setBackground(ACCENT_BTN_COLOR);
             btn.setFont(smallPixelFont);
         }
@@ -405,7 +411,7 @@ public class GameManager {
         inlinePanel.setBackground(ACCENT_COLOR);
 
         for (int i = 0; i < labels.length && i < functions.length; i++) { //ensure this cannot crash due to two diff array lengths
-            CustomButton btn = new CustomButton(labels[i]);
+            JButton btn = getNewStyledButton(labels[i]);
             btn.setBackground(ACCENT_BTN_COLOR);
             btn.setFont(font);
             btn.addActionListener(functions[i]);
@@ -453,15 +459,15 @@ public class GameManager {
         rightPanel.add(name);
 
         // Buttons for breed, color, equipment
-        CustomButton breedBtn = new CustomButton(horse.getBreed());
-        CustomButton colorBtn = new CustomButton(horse.getColor());
-        CustomButton equipmentBtn = new CustomButton(horse.getEquipment());
+        JButton breedBtn = getNewStyledButton(horse.getBreed());
+        JButton colorBtn = getNewStyledButton(horse.getColor());
+        JButton equipmentBtn = getNewStyledButton(horse.getEquipment());
 
         breedBtn.addActionListener(e -> {horse.nextBreed(); breedBtn.setText(horse.getBreed());});
         colorBtn.addActionListener(e -> {horse.nextColor(); colorBtn.setText(horse.getColor());});
         equipmentBtn.addActionListener(e -> {horse.nextEquipment(); equipmentBtn.setText(horse.getEquipment());});
 
-        for (CustomButton btn : new CustomButton[]{breedBtn, colorBtn, equipmentBtn}) {
+        for (JButton btn : new JButton[]{breedBtn, colorBtn, equipmentBtn}) {
             btn.setBackground(ACCENT_BTN_COLOR);
             btn.setFont(extreemlySmallPixelFont);
             btn.setAlignmentX(Component.LEFT_ALIGNMENT);  // Ensure buttons are left-aligned
