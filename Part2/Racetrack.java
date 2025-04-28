@@ -51,8 +51,11 @@ public class Racetrack extends JPanel {
     public void logStart() {
         startTime = LocalDateTime.now();
     }
+    public long getTime() {
+        return Duration.between(startTime, LocalDateTime.now()).getSeconds();
+    }
     public String getSpeed(Horse horse) {
-        float speed = ((float) horse.getProgress()) / Duration.between(startTime, LocalDateTime.now()).getSeconds();
+        float speed = ((float) horse.getProgress()) / getTime();
         return String.format("%.2f", speed);
     }
 

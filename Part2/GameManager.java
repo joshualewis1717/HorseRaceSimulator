@@ -352,13 +352,55 @@ public class GameManager {
 
         addNewLabel(sidePanel, smallPixelFont, raceMsg);
 
+
         if (!lastWinner.equals("NOBODY")) {
+            JPanel winnerPanel = null;
+            Horse winner = null;
             for (Horse horse : racetrack.getHorses()) {
                 if (horse.getName().equals(lastWinner)) {
-                    sidePanel.add(createHorsePanelForRace(horse));
+                    winnerPanel = createHorsePanelForRace(horse);
+                    winner = horse;
+                    sidePanel.add(winnerPanel);
                 }
             }
+
+            if (winnerPanel != null && winner != null) {
+                JPanel horseStats = (JPanel) winnerPanel.getComponent(1); //again still in order name, speed, position
+
+                //this time, i will change speed to become average: --- m/s last known speed because its already average
+                //and i will make position the time: -- s
+                (   (JLabel) horseStats.getComponent(1)   ).setText(" Average: "+racetrack.getSpeed(winner)+" m/s");
+                (   (JLabel) horseStats.getComponent(2)   ).setText(" Time: "+racetrack.getTime()+" s");
+            }
         }
+
+
+
+
+
+            /*String horseName = horse.getName();
+            String horsePanelName = (   (JLabel) horseStats.getComponent(0)   ).getText();
+            if (!horseName.equals(horsePanelName)) {
+
+
+                JLabel horseImg = (JLabel) horsePanel.getComponent(0);
+
+                BufferedImage ogImg = horse.getIcon();
+                int size = Math.min(ogImg.getWidth(), ogImg.getHeight());
+                BufferedImage cropped = ogImg.getSubimage(0, 0, size, size);
+                Image scaledImg = cropped.getScaledInstance(100, 100, Image.SCALE_SMOOTH);
+                horseImg.setIcon(new ImageIcon(scaledImg));
+            }
+
+            JLabel speedLabel = (JLabel) horseStats.getComponent(1);
+            if (horse.hasFallen()) speedLabel.setText(" FALLEN :(");
+            else speedLabel.setText(" Speed: "+racetrack.getSpeed(horse)+" m/s");*/
+
+
+
+
+        sidePanel.revalidate();
+        sidePanel.repaint();
 
         sidePanel.repaint();
     }
