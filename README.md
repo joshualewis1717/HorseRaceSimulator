@@ -1,9 +1,9 @@
-============================
-   HORSE RACING SIMULATOR
-      by Joshua Lewis
-============================
+----------------------------
+HORSE RACING SIMULATOR
+by Joshua Lewis
+----------------------------
 
- PROJECT SETUP INSTRUCTIONS
+PROJECT SETUP INSTRUCTIONS
 ----------------------------
 
 1. Install Java 21 or higher.
@@ -46,29 +46,6 @@ USAGE NOTES
 - The text-based version will simulate a horse race using console output.
 - The graphical version will simulate the horse race using a basic GUI window.
 
-============================
-  GOOD LUCK AND HAVE FUN!
-============================
-
-
-
-
-
-i. The README file must provide clear instructions on how to run your program.
-ii. Ensure that it includes:
-i. Step-by-step setup instructions, including any necessary dependencies.
-ii. Detailed information on how to compile and run both the textual and graphical
-versions of the simulator.
-iii. Explanation of how to invoke the relevant methods (startRace for Part 1,
-startRaceGUI for Part 2).
-iv. Any other relevant details that would help a user to run the program smoothly
-without requiring any special tools or IDE features.
-
-
-
-README Documentation (4%)
-• Project Setup Instructions (2%)
-o README includes clear instructions on how to run the project locally.
-• Dependencies & Usage Guidelines (2%)
-o README lists all required dependencies and their installation steps.
-o Basic usage instructions are provided for users.
+----------------------------
+GOOD LUCK AND HAVE FUN!
+----------------------------
