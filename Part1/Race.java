@@ -38,13 +38,7 @@ public class Race
 
 
     public static void main(String[] args) {
-        int distance;
-        try {
-            distance = Integer.parseInt(args[0]);
-        } catch (Exception e) {
-            distance = DEFAULT_DISTANCE;
-        }
-        Race race = new Race(distance);
+        Race race = new Race(DEFAULT_DISTANCE);
         race.addHorse(new Horse('@', "PIPPI LONGSTOCKING", 0.6), 1);
         race.addHorse(new Horse('#', "KOKOMO", 0.5), 2);
         race.addHorse(new Horse('~', "EL JEFE", 0.4), 3);

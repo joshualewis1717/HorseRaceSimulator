@@ -66,9 +66,7 @@ public class Horse {
         try {
             imgAtlas = ImageIO.read(getClass().getResource(srcImgPath)); // Load image
             horseIcon = ImageIO.read(getClass().getResource(srcIconPathFolder + imgAssignCounter + ".png"));
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        } catch (IOException e) { e.printStackTrace(); }
         imgAssignCounter++;
         if (imgAssignCounter > 4) imgAssignCounter = 0;
     }
