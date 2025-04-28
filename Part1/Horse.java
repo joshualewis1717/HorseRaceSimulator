@@ -1,6 +1,7 @@
 
 /**
- * Write a description of class Horse here.
+ * A class to represent each racer in the horse race
+ * encapsulating all relevant data and methods for a horse
  * 
  * @author Joshua Lewis
  * @version 28/04/2025

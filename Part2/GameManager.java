@@ -5,12 +5,12 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 
 public class GameManager {
-
     //constants
     public static final Color BACKGROUND_COLOR = Color.decode("#F0AE24");
     public static final Color ACCENT_COLOR = Color.decode("#B5702A");
     public static final Color ACCENT_BTN_COLOR = Color.decode("#6E4F2A");
 
+    //UI
     private static JFrame frame;
     private static JLayeredPane layeredPane;
     private static Racetrack racetrack;
@@ -19,9 +19,17 @@ public class GameManager {
     public static Font bigPixelFont, mediumPixelFont, smallPixelFont, verySmallPixelFont, extreemlySmallPixelFont;
     public static JButton mainButton1, mainButton2;
 
+    //UI state management
+    public static int screen;
+    public static final int RACE_CONFIG = 0, HORSE_CONFIG = 1, RACE = 2, RACE_END = 3;
+
+    //race
     public static boolean racing = false;
+    private static Timer raceTimer;
     public static String lastWinner = "none";
 
+    //main method <----- PROGRAM STARTS HERE
+    //
     public static void main(String[] args) {
         createGUI();
         setScreen(RACE_CONFIG);
@@ -34,6 +42,8 @@ public class GameManager {
         });
     }
 
+    //UI
+    //
     public static void createGUI(){
         frame = new JFrame("Horse Race Simulator");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -110,15 +120,12 @@ public class GameManager {
 
         frame.addComponentListener(new ComponentAdapter() {@Override public void componentResized(ComponentEvent e) {onResized();}});
     }
-
     public static void setBackgroundColor(Color color) {
         layeredPane.setBackground(color);
     }
-
     private static void onResized() {
         int height = layeredPane.getHeight();
         int width = layeredPane.getWidth();
-
 
         //padding of 10px included in all calculations
         sidePanelParent.setPreferredSize(new Dimension(280, height - 20));
@@ -129,13 +136,9 @@ public class GameManager {
         mainButton1.setBounds(10, buttonY, (availableWidth - 3 * 10) / 2, 80); // adjusted for padding
         mainButton2.setBounds(availableWidth / 2 + 10, buttonY, (availableWidth - 3 * 10) / 2, 80); // adjusted for padding
 
-
         racetrack.setBounds( 10, 10, (3*width/4) - 30, height - 20);
         racetrack.loadTrack();
-
         racetrack.onResized();
-
-
         racetrack.repaint();
         sidePanel.invalidate();
         mainButton1.invalidate();
@@ -144,19 +147,16 @@ public class GameManager {
         frame.revalidate(); // Refresh layout after resizing
 
     }
-
-    //useful to repaint the track statically so globally
-    public static void invalidate() {
+    public static void invalidate() {  //useful to repaint the track statically so globally
         racetrack.repaint();
     }
 
-
+    //race
+    //
     public static void setWinner(Horse horse){
         lastWinner = horse.getName();
         racing = false;
     }
-
-    private static Timer raceTimer;
     private static void startRaceGUI() {
         racing = true;
         racetrack.logStart();
@@ -175,12 +175,9 @@ public class GameManager {
 
         raceTimer.start();
     }
-    
-    
 
     //screens
-    public static int screen;
-    public static final int RACE_CONFIG = 0, HORSE_CONFIG = 1, RACE = 2, RACE_END = 3;
+    //
     private static void setScreen(int phase) {
         screen = phase;
         if (phase == RACE_CONFIG) {
@@ -211,13 +208,13 @@ public class GameManager {
     }
 
     //Side panel screens
+    //
     private static void setRaceConfigureScreen() {
         sidePanel.removeAll();
         sidePanel.setLayout(new BoxLayout(sidePanel, BoxLayout.Y_AXIS));
         sidePanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
         addNewLabel(sidePanel, smallPixelFont, "Configure Race");
-
 
         //Lanes
         addPlusMinusControl(sidePanel,"Lanes",
@@ -256,7 +253,6 @@ public class GameManager {
         }
         addButtonList(sidePanel, Racetrack.weatherNames, weatherSets, verySmallPixelFont, 5);
 
-
         sidePanel.repaint();
     }
     private static void setHorseConfigureScreen() {
@@ -266,25 +262,23 @@ public class GameManager {
 
         addNewLabel(sidePanel, smallPixelFont, "Customize");
 
-        // Add a rigid area (just a gap for spacing)
+        // Add a rigid area
         sidePanel.add(Box.createRigidArea(new Dimension(0, 5)));
 
         // Configure layout constraints for components
         int yPos = 60;  // Vertical position for the next components
-        System.out.println("HORSES SIZE: "+ racetrack.getHorses().size());
         for (Horse horse : racetrack.getHorses()) {
             JPanel horsePanel = createHorseCustomizePanel(sidePanel, horse);
             sidePanel.add(horsePanel);
 
             layout.putConstraint(SpringLayout.WEST, horsePanel, 10, SpringLayout.WEST, sidePanel);
             layout.putConstraint(SpringLayout.NORTH, horsePanel, yPos, SpringLayout.NORTH, sidePanel);
-            layout.putConstraint(SpringLayout.EAST, horsePanel, -10, SpringLayout.EAST, sidePanel); // 10px padding from the right
+            layout.putConstraint(SpringLayout.EAST, horsePanel, -10, SpringLayout.EAST, sidePanel);
 
-            yPos += horsePanel.getPreferredSize().height + 10;  // Adjust based on your component height
+            yPos += horsePanel.getPreferredSize().height + 10;
         }
 
         sidePanel.setPreferredSize(new Dimension(sidePanel.getWidth(), yPos));
-
         sidePanel.revalidate();
         sidePanel.repaint();
     }
@@ -304,8 +298,6 @@ public class GameManager {
 
         // Revalidate and repaint the side panel after adding horse panels
         sidePanel.revalidate();
-        sidePanel.repaint();
-
         sidePanel.repaint();
     }
     public static void updateRaceScreen() {
@@ -340,8 +332,6 @@ public class GameManager {
             JLabel speedLabel = (JLabel) horseStats.getComponent(1);
             if (horse.hasFallen()) speedLabel.setText(" FALLEN :(");
             else speedLabel.setText(" Speed: "+racetrack.getSpeed(horse)+" m/s");
-
-
         }
 
         sidePanel.revalidate();
@@ -355,7 +345,6 @@ public class GameManager {
         String raceMsg = (lastWinner.equals("NOBODY")) ? "NO WINNER" : "WINNER:";
 
         addNewLabel(sidePanel, smallPixelFont, raceMsg);
-
 
         if (!lastWinner.equals("NOBODY")) {
             JPanel winnerPanel = null;
@@ -378,38 +367,12 @@ public class GameManager {
             }
         }
 
-
-
-
-
-            /*String horseName = horse.getName();
-            String horsePanelName = (   (JLabel) horseStats.getComponent(0)   ).getText();
-            if (!horseName.equals(horsePanelName)) {
-
-
-                JLabel horseImg = (JLabel) horsePanel.getComponent(0);
-
-                BufferedImage ogImg = horse.getIcon();
-                int size = Math.min(ogImg.getWidth(), ogImg.getHeight());
-                BufferedImage cropped = ogImg.getSubimage(0, 0, size, size);
-                Image scaledImg = cropped.getScaledInstance(100, 100, Image.SCALE_SMOOTH);
-                horseImg.setIcon(new ImageIcon(scaledImg));
-            }
-
-            JLabel speedLabel = (JLabel) horseStats.getComponent(1);
-            if (horse.hasFallen()) speedLabel.setText(" FALLEN :(");
-            else speedLabel.setText(" Speed: "+racetrack.getSpeed(horse)+" m/s");*/
-
-
-
-
         sidePanel.revalidate();
-        sidePanel.repaint();
-
         sidePanel.repaint();
     }
 
-    //add premade custom components
+    //add pre-made custom components
+    //
     private static JButton getNewStyledButton(String text) {
         JButton button = new JButton(text);
         button.setForeground(Color.WHITE);
@@ -452,7 +415,7 @@ public class GameManager {
     }
     private static void addButtonList(JPanel parent, String[] labels, ActionListener[] functions, Font font, int yPad) {
         JPanel inlinePanel = new JPanel();
-        inlinePanel.setLayout(new BoxLayout(inlinePanel, BoxLayout.Y_AXIS)); // Horizontally align elements
+        inlinePanel.setLayout(new BoxLayout(inlinePanel, BoxLayout.Y_AXIS)); // horizontally align elements
         inlinePanel.setBackground(ACCENT_COLOR);
 
         for (int i = 0; i < labels.length && i < functions.length; i++) { //ensure this cannot crash due to two diff array lengths
@@ -494,13 +457,13 @@ public class GameManager {
         JPanel rightPanel = new JPanel();
         rightPanel.setBackground(ACCENT_BTN_COLOR.darker());
         rightPanel.setLayout(new BoxLayout(rightPanel, BoxLayout.Y_AXIS));
-        rightPanel.setAlignmentX(Component.LEFT_ALIGNMENT);  // Ensure left-alignment for the panel
+        rightPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
 
         // Horse name
         JLabel name = new JLabel("  " + horse.getName());
         name.setFont(verySmallPixelFont);
         name.setForeground(Color.WHITE);
-        name.setAlignmentX(Component.LEFT_ALIGNMENT);  // Left-align the name
+        name.setAlignmentX(Component.LEFT_ALIGNMENT);
         rightPanel.add(name);
 
         // Buttons for breed, color, equipment
@@ -515,9 +478,9 @@ public class GameManager {
         for (JButton btn : new JButton[]{breedBtn, colorBtn, equipmentBtn}) {
             btn.setBackground(ACCENT_BTN_COLOR);
             btn.setFont(extreemlySmallPixelFont);
-            btn.setAlignmentX(Component.LEFT_ALIGNMENT);  // Ensure buttons are left-aligned
+            btn.setAlignmentX(Component.LEFT_ALIGNMENT);
             rightPanel.add(btn);
-            rightPanel.add(Box.createRigidArea(new Dimension(0, 5)));  // Space between buttons
+            rightPanel.add(Box.createRigidArea(new Dimension(0, 5)));
         }
 
         horsePanel.add(rightPanel, BorderLayout.CENTER);
@@ -526,7 +489,7 @@ public class GameManager {
     private static JPanel createHorsePanelForRace(Horse horse) {
         JPanel horsePanel = new JPanel(new BorderLayout());
         horsePanel.setBackground(ACCENT_COLOR);
-        horsePanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 120));  // Set max height
+        horsePanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 120));
 
         // Horse image setup
         BufferedImage ogImg = horse.getIcon();  // Assuming the Horse class has a getIcon method
@@ -565,6 +528,4 @@ public class GameManager {
         horsePanel.add(rightPanel, BorderLayout.CENTER);
         return horsePanel;
     }
-
-
 }

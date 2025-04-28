@@ -44,7 +44,7 @@ USAGE NOTES
 - Always recompile if you make any changes to the Java files.
 - If you encounter errors about Java versions, ensure you are using Java 21 or later for both compiling and running.
 - The text-based version will simulate a horse race using console output.
-- The graphical version will simulate the horse race using a basic GUI window.
+- The graphical version will simulate the horse race using a basic GUI window - using this version is self explanatory
 
 ----------------------------
 GOOD LUCK AND HAVE FUN!

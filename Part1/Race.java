@@ -185,6 +185,8 @@ public class Race
     private void printRace()
     {
         System.out.print('\u000C');  //clear the terminal window
+        //the above command was given but doenst work
+        //simply push it far offscreen instead
         System.out.println("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n");
 
         multiplePrint('=',raceLength+3); //top edge of track
